@@ -1,0 +1,93 @@
+<?php
+
+namespace Tests\Unit;
+
+use App\Http\Requests\Incident\StoreIncidentReportRequest;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\PresenceVerifierInterface;
+use Tests\TestCase;
+
+class StoreIncidentReportRequestTest extends TestCase
+{
+    public function test_validation_passes_for_a_complete_incident_report_payload(): void
+    {
+        $request = new StoreIncidentReportRequest();
+
+        $validator = Validator::make([
+            'title' => 'Tumpahan bahan kimia ringan di meja praktikum',
+            'incident_category_id' => 1,
+            'location_id' => 10,
+            'incident_date' => now()->toDateString(),
+            'incident_time' => '09:30',
+            'severity_level' => 'medium',
+            'victim_type' => 'self',
+            'victim_user_id' => 5,
+            'chronology' => 'Saat praktikum berlangsung, botol kecil bahan kimia tersenggol dan cairan tumpah ke meja. Area segera diamankan dan dosen diberi tahu.',
+            'cause' => 'Penempatan botol terlalu dekat dengan area gerak mahasiswa.',
+            'initial_action' => 'Meja dibersihkan dan area diberi tanda peringatan.',
+            'impact' => 'Tidak ada cedera, tetapi aktivitas praktikum sempat dihentikan sementara.',
+        ], $request->rules(), $request->messages());
+
+        $validator->setPresenceVerifier(new FakePresenceVerifier([
+            'incident_categories' => [1],
+            'locations' => [10],
+            'users' => [5],
+        ]));
+
+        $this->assertTrue($validator->passes());
+    }
+
+    public function test_validation_fails_for_an_invalid_incident_report_payload(): void
+    {
+        $request = new StoreIncidentReportRequest();
+
+        $validator = Validator::make([
+            'title' => '',
+            'incident_category_id' => 999,
+            'location_id' => 777,
+            'incident_date' => now()->addDay()->toDateString(),
+            'severity_level' => 'urgent',
+            'victim_type' => 'unknown',
+            'chronology' => 'Terlalu singkat',
+        ], $request->rules(), $request->messages());
+
+        $validator->setPresenceVerifier(new FakePresenceVerifier([
+            'incident_categories' => [1],
+            'locations' => [10],
+        ]));
+
+        $this->assertTrue($validator->fails());
+        $this->assertSame([
+            'title',
+            'incident_category_id',
+            'location_id',
+            'incident_date',
+            'severity_level',
+            'victim_type',
+            'chronology',
+        ], array_keys($validator->errors()->messages()));
+    }
+}
+
+class FakePresenceVerifier implements PresenceVerifierInterface
+{
+    public function __construct(
+        protected array $existingValues = [],
+    ) {
+    }
+
+    public function getCount($collection, $column, $value, $excludeId = null, $idColumn = null, array $extra = []): int
+    {
+        return in_array((int) $value, $this->existingValues[$collection] ?? [], true) ? 1 : 0;
+    }
+
+    public function getMultiCount($collection, $column, array $values, array $extra = []): int
+    {
+        return count(array_intersect($values, $this->existingValues[$collection] ?? []));
+    }
+
+    public function setConnection($connection): void
+    {
+        // Validation in this test uses an in-memory verifier stub, so no connection is needed.
+    }
+}
