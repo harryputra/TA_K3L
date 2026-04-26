@@ -9,11 +9,12 @@ class KnowledgeCategory extends Model
 {
     protected $fillable = [
         'name',
+        'slug',
         'description',
     ];
 
     public function articles(): HasMany
     {
-        return $this->hasMany(KnowledgeArticle::class);
+        return $this->hasMany(KnowledgeArticle::class, 'knowledge_category_id');
     }
 }

@@ -10,8 +10,12 @@ class DashboardController extends Controller
 {
     public function __invoke(SatgasDashboardData $dashboardData): View
     {
-        ['stats' => $stats, 'priorityReports' => $priorityReports] = $dashboardData->build();
+        [
+            'stats' => $stats,
+            'priorityReports' => $priorityReports,
+            'workloadSummary' => $workloadSummary,
+        ] = $dashboardData->build();
 
-        return view('satgas.dashboard', compact('stats', 'priorityReports'));
+        return view('satgas.dashboard', compact('stats', 'priorityReports', 'workloadSummary'));
     }
 }

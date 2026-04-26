@@ -56,8 +56,20 @@ class AuthorizationFeatureTest extends TestCase
                         'verified_incidents' => 0,
                         'location_count' => 0,
                         'role_count' => 0,
+                        'published_knowledge' => 0,
+                        'hazard_reports' => 0,
+                        'reviewed_hazards' => 0,
+                        'resolved_hazards' => 0,
+                        'emergency_contacts' => 0,
                     ],
                     'recentReports' => collect(),
+                    'recentHazardReports' => collect(),
+                    'operationalSummary' => [
+                        'incident_backlog' => 0,
+                        'hazard_backlog' => 0,
+                        'published_knowledge' => 0,
+                        'active_emergency_contacts' => 0,
+                    ],
                 ];
             }
         });
@@ -87,9 +99,16 @@ class AuthorizationFeatureTest extends TestCase
                         'submitted_incidents' => 0,
                         'verified_incidents' => 0,
                         'investigating_incidents' => 0,
+                        'resolved_incidents' => 0,
+                        'closed_incidents' => 0,
                         'critical_incidents' => 0,
                     ],
                     'priorityReports' => collect(),
+                    'workloadSummary' => [
+                        'needs_review' => 0,
+                        'needs_field_follow_up' => 0,
+                        'ready_to_close' => 0,
+                    ],
                 ];
             }
         });

@@ -57,9 +57,16 @@ class InactiveUserAccessTest extends TestCase
                         'submitted_incidents' => 0,
                         'verified_incidents' => 0,
                         'investigating_incidents' => 0,
+                        'resolved_incidents' => 0,
+                        'closed_incidents' => 0,
                         'critical_incidents' => 0,
                     ],
                     'priorityReports' => collect(),
+                    'workloadSummary' => [
+                        'needs_review' => 0,
+                        'needs_field_follow_up' => 0,
+                        'ready_to_close' => 0,
+                    ],
                 ];
             }
         });

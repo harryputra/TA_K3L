@@ -48,4 +48,21 @@ class IncidentCategoryController extends Controller
             ->route('admin.incident-categories.index')
             ->with('status', 'Kategori insiden berhasil diperbarui.');
     }
+
+    public function destroy(IncidentCategory $incidentCategory): RedirectResponse
+    {
+        if ($incidentCategory->incidentReports()->exists()) {
+            return redirect()
+                ->route('admin.incident-categories.index')
+                ->withErrors([
+                    'incident_category' => 'Kategori insiden tidak bisa dihapus karena masih dipakai oleh laporan.',
+                ]);
+        }
+
+        $incidentCategory->delete();
+
+        return redirect()
+            ->route('admin.incident-categories.index')
+            ->with('status', 'Kategori insiden berhasil dihapus.');
+    }
 }

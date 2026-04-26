@@ -32,6 +32,24 @@ class IncidentReportPolicy
             return false;
         }
 
-        return in_array($incidentReport->status, ['submitted', 'investigating'], true);
+        return $incidentReport->status === 'submitted';
+    }
+
+    public function manageProgress(User $user, IncidentReport $incidentReport): bool
+    {
+        if (! ($user->isAdmin() || $user->isSatgas())) {
+            return false;
+        }
+
+        return in_array($incidentReport->status, ['submitted', 'verified', 'investigating', 'resolved', 'rejected'], true);
+    }
+
+    public function addFollowUp(User $user, IncidentReport $incidentReport): bool
+    {
+        if (! ($user->isAdmin() || $user->isSatgas())) {
+            return false;
+        }
+
+        return $incidentReport->status !== 'closed';
     }
 }

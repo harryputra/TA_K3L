@@ -4,12 +4,18 @@ namespace App\Actions\Incidents;
 
 use App\Models\IncidentAttachment;
 use App\Models\IncidentReport;
+use App\Support\ActivityLogger;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CreateIncidentReport
 {
+    public function __construct(
+        protected ActivityLogger $activityLogger,
+    ) {
+    }
+
     public function handle(array $validated, int $reporterId): IncidentReport
     {
         return DB::transaction(function () use ($validated, $reporterId) {
@@ -35,6 +41,19 @@ class CreateIncidentReport
                 'change_note' => 'Laporan insiden dibuat oleh pelapor.',
                 'created_at' => now(),
             ]);
+
+            $this->activityLogger->log(
+                $reporterId,
+                $reporterId,
+                'incident_created',
+                'Laporan insiden berhasil dikirim',
+                "Laporan {$report->report_number} dengan judul \"{$report->title}\" sedang menunggu review Satgas.",
+                $report,
+                [
+                    'status' => 'submitted',
+                    'report_number' => $report->report_number,
+                ],
+            );
 
             return $report->load(['category', 'location', 'attachments']);
         });

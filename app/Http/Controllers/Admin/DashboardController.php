@@ -10,8 +10,13 @@ class DashboardController extends Controller
 {
     public function __invoke(AdminDashboardData $dashboardData): View
     {
-        ['stats' => $stats, 'recentReports' => $recentReports] = $dashboardData->build();
+        [
+            'stats' => $stats,
+            'recentReports' => $recentReports,
+            'recentHazardReports' => $recentHazardReports,
+            'operationalSummary' => $operationalSummary,
+        ] = $dashboardData->build();
 
-        return view('admin.dashboard', compact('stats', 'recentReports'));
+        return view('admin.dashboard', compact('stats', 'recentReports', 'recentHazardReports', 'operationalSummary'));
     }
 }

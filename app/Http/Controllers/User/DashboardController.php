@@ -16,9 +16,23 @@ class DashboardController extends Controller
         [
             'stats' => $stats,
             'recentReports' => $recentReports,
+            'recentHazardReports' => $recentHazardReports,
             'publishedKnowledgeCount' => $publishedKnowledgeCount,
+            'latestReportSummary' => $latestReportSummary,
+            'latestHazardSummary' => $latestHazardSummary,
+            'featuredKnowledge' => $featuredKnowledge,
+            'knowledgeRecommendations' => $knowledgeRecommendations,
         ] = $dashboardData->build($user->id);
 
-        return view('user.dashboard', compact('stats', 'recentReports', 'publishedKnowledgeCount'));
+        return view('user.dashboard', compact(
+            'stats',
+            'recentReports',
+            'recentHazardReports',
+            'publishedKnowledgeCount',
+            'latestReportSummary',
+            'latestHazardSummary',
+            'featuredKnowledge',
+            'knowledgeRecommendations',
+        ));
     }
 }

@@ -95,6 +95,11 @@ class User extends Authenticatable
         return $this->hasMany(DailyCheck::class, 'inspected_by');
     }
 
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role?->code === 'admin';

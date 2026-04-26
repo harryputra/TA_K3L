@@ -60,7 +60,7 @@
             @yield('content')
         </main>
     </div>
-
+    @include('partials.delete-confirm-modal')
     @stack('scripts')
 </body>
 </html>
