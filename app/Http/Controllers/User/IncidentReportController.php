@@ -21,8 +21,6 @@ class IncidentReportController extends Controller
 
     public function index(Request $request): View
     {
-        $this->authorize('viewAny', IncidentReport::class);
-
         $selectedQuery = trim((string) $request->string('q'));
         $selectedStatus = trim((string) $request->string('status'));
 
@@ -57,30 +55,25 @@ class IncidentReportController extends Controller
 
     public function status(Request $request): View
     {
-        $this->authorize('viewAny', IncidentReport::class);
-
         $selectedQuery = trim((string) $request->string('q'));
         $selectedStatus = trim((string) $request->string('status'));
 
         $reports = IncidentReport::query()
             ->with(['category', 'location'])
-            ->where('reported_by', $request->user()->id)
+            ->when($selectedQuery !== '', function ($query) use ($selectedQuery) {
+                $query->where(function ($subQuery) use ($selectedQuery) {
+                    $subQuery
+                        ->where('report_number', 'like', '%' . $selectedQuery . '%')
+                        ->orWhere('reporter_email', 'like', '%' . $selectedQuery . '%')
+                        ->orWhere('reporter_whatsapp', 'like', '%' . $selectedQuery . '%');
+                });
+            })
+            ->when($selectedStatus !== '', fn ($query) => $query->where('status', $selectedStatus))
+            ->when($selectedQuery === '' && $selectedStatus === '', fn ($query) => $query->whereRaw('1 = 0'))
             ->latest()
             ->get();
 
-        $filteredReports = $reports
-            ->when($selectedQuery !== '', function ($collection) use ($selectedQuery) {
-                $needle = mb_strtolower($selectedQuery);
-
-                return $collection->filter(function ($report) use ($needle) {
-                    return str_contains(mb_strtolower((string) $report->report_number), $needle)
-                        || str_contains(mb_strtolower((string) $report->title), $needle)
-                        || str_contains(mb_strtolower((string) optional($report->category)->name), $needle)
-                        || str_contains(mb_strtolower((string) optional($report->location)->name), $needle);
-                });
-            })
-            ->when($selectedStatus !== '', fn ($collection) => $collection->where('status', $selectedStatus))
-            ->values();
+        $filteredReports = $reports->values();
 
         $statusCounts = collect([
             'draft' => $reports->where('status', 'draft')->count(),
@@ -144,15 +137,11 @@ class IncidentReportController extends Controller
 
     public function create(): View
     {
-        $this->authorize('create', IncidentReport::class);
-
         return view('user.incidents.create', $this->reportFormOptions->incident());
     }
 
     public function show(IncidentReport $incidentReport): View
     {
-        $this->authorize('view', $incidentReport);
-
         $incidentReport->load([
             'category',
             'location',
@@ -169,15 +158,13 @@ class IncidentReportController extends Controller
 
     public function store(StoreIncidentReportRequest $request): RedirectResponse
     {
-        $this->authorize('create', IncidentReport::class);
-
         $report = $this->createIncidentReport->handle(
             $request->safe()->except('victim_type'),
-            $request->user()->id,
+            $request->user()?->id,
         );
 
         return redirect()
-            ->route('user.incidents.index')
-            ->with('status', "Laporan {$report->report_number} berhasil dikirim dan menunggu verifikasi Satgas.");
+            ->route('user.incidents.status', ['q' => $report->report_number])
+            ->with('status', "Laporan {$report->report_number} berhasil dikirim. Simpan nomor ini untuk memantau status.");
     }
 }

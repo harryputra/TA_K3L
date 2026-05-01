@@ -5,6 +5,7 @@ namespace App\Actions\Hazards;
 use App\Models\PotentialHazardAttachment;
 use App\Models\PotentialHazardReport;
 use App\Support\ActivityLogger;
+use App\Support\WhatsAppReportNotifier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -13,10 +14,11 @@ class CreatePotentialHazardReport
 {
     public function __construct(
         protected ActivityLogger $activityLogger,
+        protected WhatsAppReportNotifier $whatsAppReportNotifier,
     ) {
     }
 
-    public function handle(array $validated, int $reporterId): PotentialHazardReport
+    public function handle(array $validated, ?int $reporterId = null): PotentialHazardReport
     {
         return DB::transaction(function () use ($validated, $reporterId) {
             $attachments = $validated['attachments'] ?? [];
@@ -34,18 +36,23 @@ class CreatePotentialHazardReport
                 $this->storeAttachment($report, $attachment, $reporterId);
             }
 
-            $this->activityLogger->log(
-                $reporterId,
-                $reporterId,
-                'hazard_created',
-                'Hazard report berhasil dikirim',
-                "Hazard {$report->report_number} dengan judul \"{$report->title}\" sedang menunggu review Satgas.",
-                $report,
-                [
-                    'status' => 'submitted',
-                    'report_number' => $report->report_number,
-                ],
-            );
+            if ($reporterId !== null) {
+                $this->activityLogger->log(
+                    $reporterId,
+                    $reporterId,
+                    'hazard_created',
+                    'Hazard report berhasil dikirim',
+                    "Hazard {$report->report_number} dengan judul \"{$report->title}\" sedang menunggu review Satgas.",
+                    $report,
+                    [
+                        'status' => 'submitted',
+                        'report_number' => $report->report_number,
+                    ],
+                );
+            }
+
+            $this->whatsAppReportNotifier->hazardCreated($report);
+            $this->whatsAppReportNotifier->satgasHazardCreated($report);
 
             return $report->load(['location', 'attachments']);
         });
@@ -56,7 +63,7 @@ class CreatePotentialHazardReport
         return 'HZD-' . now()->format('Ymd-His') . '-' . Str::upper(Str::random(5));
     }
 
-    protected function storeAttachment(PotentialHazardReport $report, UploadedFile $attachment, int $reporterId): void
+    protected function storeAttachment(PotentialHazardReport $report, UploadedFile $attachment, ?int $reporterId): void
     {
         $path = $attachment->store('potential-hazard-attachments', 'public');
 

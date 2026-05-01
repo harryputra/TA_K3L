@@ -21,7 +21,7 @@
             <span class="inline-flex rounded-full border border-white/20 bg-white/12 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/90">Portal Operasional K3L</span>
             <h1 class="mt-6 text-center text-5xl font-bold text-white lg:text-7xl">Status Pelaporan</h1>
             <p class="max-w-6xl px-4 pt-2 text-center text-lg text-white/90 lg:text-2xl">
-                Ikuti perkembangan setiap laporan yang Anda kirim, mulai dari tahap verifikasi hingga penyelesaian tindak lanjut di lapangan.
+                Masukkan nomor laporan, email, atau nomor WhatsApp pelapor untuk melihat perkembangan verifikasi dan tindak lanjut.
             </p>
         </div>
     </header>
@@ -32,9 +32,9 @@
                 <div class="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">Papan Status</p>
-                        <h2 class="mt-2 text-3xl font-bold text-slate-900">Lihat posisi setiap laporan Anda secara cepat</h2>
+                        <h2 class="mt-2 text-3xl font-bold text-slate-900">Cek posisi laporan secara cepat</h2>
                         <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                            Ringkasan ini membantu Anda memahami laporan mana yang masih menunggu review, sedang ditindaklanjuti, atau sudah selesai ditutup.
+                            Pencarian status hanya menampilkan laporan yang cocok dengan nomor laporan atau kontak pelapor yang dimasukkan.
                         </p>
                     </div>
                     <a href="{{ route('user.incidents.create') }}"
@@ -49,7 +49,7 @@
                     <label class="block">
                         <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Cari Laporan</span>
                         <input type="search" name="q" value="{{ $selectedQuery ?? '' }}"
-                            placeholder="No laporan, judul, kategori, atau lokasi"
+                            placeholder="No laporan, email, atau no WhatsApp"
                             class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-[var(--primary-color)]">
                     </label>
                     <label class="block">
@@ -116,7 +116,7 @@
                     <div class="flex items-center justify-between border-b border-slate-200 pb-4">
                         <div>
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">Update Terbaru</p>
-                            <h2 class="mt-2 text-2xl font-bold text-slate-900">Laporan yang perlu Anda pantau</h2>
+                            <h2 class="mt-2 text-2xl font-bold text-slate-900">Hasil pencarian laporan</h2>
                         </div>
                         @if (filled($selectedQuery ?? null) || filled($selectedStatus ?? null))
                             <a href="{{ route('user.incidents.status') }}" class="text-sm font-semibold text-[var(--primary-color)]">

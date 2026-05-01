@@ -4,12 +4,14 @@ namespace App\Actions\Incidents;
 
 use App\Models\IncidentReport;
 use App\Support\ActivityLogger;
+use App\Support\WhatsAppReportNotifier;
 use Illuminate\Support\Facades\DB;
 
 class UpdateIncidentReportStatus
 {
     public function __construct(
         protected ActivityLogger $activityLogger,
+        protected WhatsAppReportNotifier $whatsAppReportNotifier,
     ) {
     }
 
@@ -32,18 +34,26 @@ class UpdateIncidentReportStatus
                 'created_at' => now(),
             ]);
 
-            $this->activityLogger->log(
-                $incidentReport->reported_by,
-                $userId,
-                'incident_status_updated',
-                'Status laporan insiden diperbarui',
-                $note ?: $this->defaultNote($status),
+            if ($incidentReport->reported_by !== null) {
+                $this->activityLogger->log(
+                    $incidentReport->reported_by,
+                    $userId,
+                    'incident_status_updated',
+                    'Status laporan insiden diperbarui',
+                    $note ?: $this->defaultNote($status),
+                    $incidentReport,
+                    [
+                        'from_status' => $previousStatus,
+                        'to_status' => $status,
+                        'report_number' => $incidentReport->report_number,
+                    ],
+                );
+            }
+
+            $this->whatsAppReportNotifier->incidentStatusUpdated(
                 $incidentReport,
-                [
-                    'from_status' => $previousStatus,
-                    'to_status' => $status,
-                    'report_number' => $incidentReport->report_number,
-                ],
+                $status,
+                $note ?: $this->defaultNote($status),
             );
 
             return $incidentReport->fresh([

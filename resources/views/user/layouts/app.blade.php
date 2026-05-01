@@ -110,20 +110,8 @@
 </head>
 
 <body class="bg-gray-50 text-slate-900">
-    @php
-        $user = auth()->user();
-        $initials = collect(preg_split('/\s+/', trim($user->name)) ?: [])
-            ->take(2)
-            ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
-            ->implode('');
-        $unreadActivityCount = \App\Models\ActivityLog::query()
-            ->where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->count();
-    @endphp
-
     <div class="relative flex min-h-screen w-full flex-col items-center overflow-x-hidden">
-        @include('user.partials.navbar', ['user' => $user, 'initials' => $initials, 'unreadActivityCount' => $unreadActivityCount])
+        @include('user.partials.navbar')
 
         @yield('page')
     </div>

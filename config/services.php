@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'fonnte' => [
+        'send_url' => env('FONNTE_SEND_URL', 'https://api.fonnte.com/send'),
+        'device_token' => env('FONNTE_DEVICE_TOKEN'),
+        'account_token' => env('FONNTE_ACCOUNT_TOKEN'),
+        'country_code' => env('FONNTE_COUNTRY_CODE', '62'),
+        'enabled' => env('FONNTE_ENABLED', true),
+        'verify_ssl' => env('FONNTE_VERIFY_SSL', true),
+    ],
+
 ];

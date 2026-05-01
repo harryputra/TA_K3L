@@ -1,204 +1,121 @@
 # SIAGA POLMAN K3L
 
-Sistem informasi K3L kampus untuk pelaporan insiden, pelaporan potensi bahaya, pusat materi edukasi, pusat darurat, dan analisis tindak lanjut berbasis role.
+Sistem informasi K3L kampus untuk pelaporan insiden, pelaporan potensi bahaya, edukasi K3L, pusat darurat, dan tindak lanjut laporan oleh Satgas.
 
-Project ini dibangun dengan:
-- Laravel 12
-- PHP 8.4
-- Blade
-- Tailwind CSS
-- Vite
-- Pest
+Project ini dibangun dengan Laravel 12, PHP 8.4, Blade, Tailwind CSS, Vite, dan Pest.
 
 ## Gambaran Umum
 
-SIAGA POLMAN K3L dirancang untuk membantu kampus mengelola proses keselamatan kerja dan lingkungan secara lebih rapi. Sistem ini memisahkan alur kerja menjadi tiga peran utama:
+SIAGA POLMAN K3L membagi alur kerja menjadi tiga area:
 
-- `Mahasiswa/User`
-  Mengirim laporan insiden, melaporkan potensi bahaya, membaca materi K3L, memantau status laporan, dan melihat aktivitas akun.
-- `Satgas`
-  Memverifikasi laporan, menindaklanjuti hazard dan insiden, membuat materi edukasi, serta menganalisis pola temuan melalui dashboard analitik.
-- `Admin`
-  Mengelola akun, master data, knowledge center, emergency center, monitoring hazard, dan administrasi sistem secara keseluruhan.
+- `Portal Publik`: halaman informasi umum, knowledge center, pusat darurat, form laporan insiden, form laporan hazard, dan cek status laporan. Bagian ini tidak membutuhkan login.
+- `Satgas`: memverifikasi laporan, menentukan klasifikasi insiden, menindaklanjuti hazard/insiden, mengelola artikel knowledge, dan mengubah status laporan.
+- `Admin`: mengelola akun, konten emergency center, dan memantau hazard secara read-only. Admin tidak mengelola teori/knowledge, insiden, kategori insiden, lokasi, atau lokasi hazard.
 
 ## Fitur Utama
 
-### 1. Autentikasi dan Role
-- Login dengan `email` atau `username`
-- Registrasi pengguna baru sebagai `mahasiswa`
-- Redirect dashboard otomatis sesuai role
-- Proteksi akun nonaktif
+### Portal Publik
 
-### 2. Modul User
-- Dashboard ringkasan laporan dan knowledge
-- Buat laporan insiden
-- Buat laporan potensi bahaya
-- Riwayat laporan insiden
-- Status pelaporan insiden
-- Riwayat hazard report
-- Pusat darurat
-- Knowledge center
-- Aktivitas saya
-- Profil dan edit profil
-
-### 3. Modul Satgas
-- Dashboard analitik temuan dan tindak lanjut
-- Review laporan insiden
-- Verifikasi status insiden
-- Tindak lanjut insiden
-- Review hazard report
-- Update status hazard
-- Tambah laporan insiden internal
-- Tambah hazard report internal
-- Kelola materi knowledge
-
-### 4. Modul Admin
-- Dashboard administrasi sistem
-- Kelola akun semua role
-- Kelola lokasi
-- Kelola kategori insiden
-- Kelola kategori knowledge
-- Kelola artikel knowledge
-- Tambah laporan insiden internal
-- Tambah hazard report internal
-- Monitoring hazard
-- Kelola emergency contact
-- Kelola emergency response step
-- Kelola first aid guide
-
-### 5. Knowledge Center
-- Artikel knowledge dengan cover image
-- Konten materi berbasis section
-- Section dapat berisi teks, list, gambar, dan video
-- Preview materi saat create/edit
-- Tampilan show materi lebih lebar dan editorial
-
-### 6. UX Tambahan
-- Navbar floating
-- Filter dan pencarian realtime
-- Popup konfirmasi delete
-- Layout admin dan satgas diseragamkan dengan sistem user
-
-## Alur Sistem
-
-### Alur Insiden
-1. User, admin, atau satgas membuat laporan insiden.
-2. Laporan masuk dengan status `submitted`.
-3. Satgas membuka detail laporan dan melakukan verifikasi.
-4. Status dapat bergerak ke `verified`, `investigating`, `resolved`, lalu `closed`.
-5. Aktivitas pelaporan tercatat di activity log.
-6. User dapat memantau progres melalui halaman status pelaporan.
-
-### Alur Hazard
-1. User, admin, atau satgas membuat hazard report.
-2. Laporan masuk dengan status `submitted`.
-3. Satgas meninjau dan mengubah status ke `reviewed` atau `resolved`.
-4. Hazard tampil pada dashboard monitoring dan analitik.
-
-### Alur Knowledge
-1. Admin atau satgas membuat materi.
-2. Materi dapat disimpan sebagai `draft`, `review`, `published`, atau `archived`.
-3. Materi published tampil di knowledge center user.
-
-### Alur Emergency Center
-1. Admin mengelola kontak darurat, panduan pertolongan pertama, dan langkah tanggap.
-2. User mengakses pusat darurat saat membutuhkan informasi cepat.
-
-## Struktur Role dan Akses
-
-### User
-- `user.dashboard`
-- `user.incidents.*`
-- `user.hazards.*`
-- `user.knowledge.*`
-- `user.activities.*`
-- `user.profile.*`
-- `user.emergency.index`
+- Landing page informasi K3L.
+- Form laporan insiden tanpa login.
+- Form laporan potensi bahaya tanpa login.
+- Input pelapor: nama, email, dan nomor WhatsApp aktif.
+- Cek status laporan insiden berdasarkan nomor laporan atau status.
+- Knowledge center untuk materi K3L yang sudah published.
+- Emergency center berisi kontak darurat, langkah tanggap darurat, dan panduan P3K.
+- Voice to text pada detail kejadian insiden.
 
 ### Satgas
-- `satgas.dashboard`
-- `satgas.incidents.*`
-- `satgas.hazards.*`
-- `satgas.knowledge-articles.*`
+
+- Dashboard Satgas.
+- Profil Satgas.
+- Review laporan insiden dan hazard.
+- Verifikasi laporan insiden.
+- Menentukan jenis insiden, level dampak, kategori cedera, bagian tubuh, dan dampak saat verifikasi.
+- Update status insiden sampai `closed`.
+- Tambah tindak lanjut insiden.
+- Update status hazard.
+- Buat laporan internal Satgas.
+- Kelola artikel knowledge.
 
 ### Admin
-- `admin.dashboard`
-- `admin.users.*`
-- `admin.locations.*`
-- `admin.incident-categories.*`
-- `admin.knowledge-categories.*`
-- `admin.knowledge-articles.*`
-- `admin.hazards.*`
-- `admin.emergency-contacts.*`
-- `admin.emergency-response-steps.*`
-- `admin.first-aid-guides.*`
+
+- Dashboard administrasi.
+- Kelola akun pengguna.
+- Kelola emergency contact.
+- Kelola emergency response step.
+- Kelola first aid guide.
+- Monitoring hazard read-only.
+
+## Alur Insiden
+
+1. Pelapor publik mengisi form insiden dengan nama, email, WhatsApp, lokasi, tanggal kejadian, kronologi, penyebab, dan tindakan awal.
+2. Sistem membuat nomor laporan dan mengirim notifikasi WhatsApp ke Satgas.
+3. Satgas membuka detail laporan, lalu menentukan klasifikasi saat verifikasi.
+4. Status dapat bergerak dari `submitted`, `verified`, `investigating`, `resolved`, sampai `closed`.
+5. Pelapor dapat mengecek progres melalui halaman status laporan.
+
+Field yang tidak diisi oleh pelapor publik karena menjadi wewenang Satgas:
+
+- jenis insiden
+- level dampak
+- kategori cedera
+- bagian tubuh
+- dampak akhir
+- jam kejadian
+
+## Alur Hazard
+
+1. Pelapor publik mengisi form hazard dengan nama, email, WhatsApp, tipe hazard, lokasi, detail lokasi, dan catatan.
+2. Sistem mengirim notifikasi WhatsApp ke Satgas.
+3. Satgas meninjau hazard dan mengubah status ke `reviewed` atau `resolved`.
+4. Admin hanya memantau hazard dari dashboard admin.
+
+## WhatsApp Notification
+
+Integrasi WhatsApp memakai Fonnte. Variabel yang perlu disiapkan di `.env`:
+
+```env
+QUEUE_CONNECTION=sync
+FONNTE_ENABLED=true
+FONNTE_DEVICE_TOKEN=
+FONNTE_ACCOUNT_TOKEN=
+FONNTE_VERIFY_SSL=true
+```
+
+Untuk development lokal yang terkena masalah sertifikat cURL, `FONNTE_VERIFY_SSL=false` bisa dipakai sementara. Token asli jangan dimasukkan ke repository.
+
+Dengan `QUEUE_CONNECTION=sync`, pengiriman notifikasi dilakukan langsung saat request diproses. Ini mudah untuk demo dan debugging, tetapi response form bisa lebih lambat kalau API WhatsApp sedang lambat.
 
 ## Instalasi Lokal
 
-### 1. Clone repository
-```bash
-git clone <repository-url>
-cd TA_K3L
-```
-
-### 2. Install dependency backend
 ```bash
 composer install
-```
-
-### 3. Install dependency frontend
-```bash
 npm install
-```
-
-### 4. Siapkan environment
-```bash
 cp .env.example .env
 php artisan key:generate
-```
-
-Jika kamu memakai Windows PowerShell dan `cp` tidak tersedia, gunakan:
-```powershell
-Copy-Item .env.example .env
-php artisan key:generate
-```
-
-### 5. Atur database
-Sesuaikan `.env` dengan database lokal kamu.
-
-Contoh default di `.env.example` saat ini mengarah ke MySQL:
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=sistem_k3l
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-### 6. Migrasi dan seed
-```bash
 php artisan migrate:fresh --seed
-```
-
-### 7. Buat symbolic link storage
-```bash
 php artisan storage:link
 ```
 
-### 8. Jalankan aplikasi
+Untuk Windows PowerShell:
 
-Backend:
-```bash
-php artisan serve
+```powershell
+Copy-Item .env.example .env
+php artisan key:generate
+php artisan migrate:fresh --seed
+php artisan storage:link
 ```
 
-Frontend dev server:
+Jalankan aplikasi:
+
 ```bash
+php artisan serve
 npm run dev
 ```
 
 Atau gunakan script bawaan:
+
 ```bash
 composer run dev
 ```
@@ -207,114 +124,136 @@ composer run dev
 
 Setelah menjalankan `php artisan migrate:fresh --seed`, akun default berikut tersedia:
 
+| Role | Email | Username | Password |
+| --- | --- | --- | --- |
+| Admin | `admin@k3l.local` | `admin.k3l` | `password` |
+| Satgas | `satgas@k3l.local` | `satgas.k3l` | `password` |
+| Mahasiswa | `mahasiswa@k3l.local` | `mhs.k3l` | `password` |
+
+Portal publik tetap bisa digunakan tanpa login.
+
+## Dokumentasi Testing Postman
+
+Base URL default:
+
+```text
+{{base_url}} = http://127.0.0.1:8000
+```
+
+CSV testcase ada di:
+
+- [docs/postman-testing-routes.csv](</c:/Users/Hafizh/Documents/Tugas Akhir/TA_K3L/docs/postman-testing-routes.csv:1>)
+
+Environment variable yang disarankan di Postman:
+
+- `base_url`: `http://127.0.0.1:8000`
+- `csrf_token`: dikosongkan dulu
+- `incident_id`: contoh `1`
+- `hazard_id`: contoh `1`
+- `user_id`: contoh `1`
+- `location_id`: contoh `1`
+- `incident_category_id`: contoh `1`
+- `injury_category_id`: contoh `1`
+- `body_part_id`: contoh `1`
+- `knowledge_article_id`: contoh `1`
+- `knowledge_slug`: contoh `panduan-dasar-apd-area-praktikum`
+- `emergency_contact_id`: contoh `1`
+- `emergency_response_step_id`: contoh `1`
+- `first_aid_guide_id`: contoh `1`
+
+Route project ini memakai web route Laravel. Request `POST`, `PATCH`, `PUT`, dan `DELETE` membutuhkan session cookie dan CSRF token. Ambil token dari halaman form terkait atau halaman login, lalu kirim sebagai field `_token`.
+
+Script test umum Postman:
+
+```javascript
+pm.test('Response tidak error', function () {
+    pm.expect(pm.response.code).to.be.below(500);
+});
+
+pm.test('Status web valid', function () {
+    pm.expect(pm.response.code).to.be.oneOf([200, 302, 403, 404, 422]);
+});
+```
+
+## Route Aktif
+
+### Public
+
+- `GET /`
+- `GET|POST /login`
+- `GET|POST /register`
+- `POST /logout`
+- `GET /up`
+- `GET /user/dashboard`
+- `GET /user/emergency-center`
+- `GET /user/knowledge-center`
+- `GET /user/knowledge-center/module/{slug}`
+- `GET|POST /user/hazard-reports/create`
+- `GET|POST /user/incidents/create`
+- `GET /user/incidents/status`
+- `GET /user/incidents/{incidentReport}`
+
 ### Admin
-- Email: `admin@k3l.local`
-- Username: `admin.k3l`
-- Password: `password`
+
+- `GET /admin/dashboard`
+- `GET|POST /admin/users`
+- `GET /admin/users/create`
+- `GET|PUT|PATCH /admin/users/{user}/edit`
+- `GET /admin/hazards`
+- `GET /admin/hazards/{potentialHazardReport}`
+- CRUD emergency contacts
+- CRUD emergency response steps
+- CRUD first aid guides
 
 ### Satgas
-- Email: `satgas@k3l.local`
-- Username: `satgas.k3l`
-- Password: `password`
 
-### Mahasiswa
-- Email: `mahasiswa@k3l.local`
-- Username: `mhs.k3l`
-- Password: `password`
-
-## Cara Penggunaan
-
-### Sebagai Mahasiswa
-1. Login atau registrasi akun.
-2. Buka dashboard user.
-3. Pilih `Buat Laporan Insiden` atau `Buat Hazard Report`.
-4. Isi form pelaporan dan kirim.
-5. Pantau update di `Status Pelaporan`, `Riwayat Hazard`, dan `Aktivitas Saya`.
-6. Buka `Knowledge Center` untuk membaca materi edukasi.
-7. Buka `Emergency Center` jika membutuhkan bantuan darurat atau panduan cepat.
-
-### Sebagai Satgas
-1. Login dengan akun satgas.
-2. Buka dashboard satgas untuk melihat analitik dan rekomendasi otomatis.
-3. Review laporan insiden yang masuk.
-4. Verifikasi dan ubah status sesuai tindak lanjut lapangan.
-5. Review hazard report dan ubah status penanganan.
-6. Tambahkan materi knowledge bila diperlukan.
-7. Buat laporan internal jika Satgas menemukan insiden atau bahaya sendiri.
-
-### Sebagai Admin
-1. Login dengan akun admin.
-2. Kelola akun, lokasi, kategori, dan konten knowledge.
-3. Kelola konten emergency center.
-4. Pantau hazard report dan administrasi data sistem.
-5. Buat laporan internal bila diperlukan.
-
-## Testing
-
-Project ini sudah memiliki automated test untuk unit dan feature.
-
-### Menjalankan semua test
-```bash
-php artisan test
-```
-
-### Menjalankan build frontend
-```bash
-npm run build
-```
-
-### Menjalankan cache Blade check
-```bash
-php artisan view:cache
-```
-
-### Validasi Composer
-```bash
-composer validate --strict
-```
+- `GET /satgas/dashboard`
+- `GET|PATCH /satgas/profile`
+- `GET|POST /satgas/incidents`
+- `GET /satgas/incidents/create`
+- `GET /satgas/incidents/{incidentReport}`
+- `PATCH /satgas/incidents/{incidentReport}/verify`
+- `PATCH /satgas/incidents/{incidentReport}/status`
+- `POST /satgas/incidents/{incidentReport}/follow-ups`
+- `GET|POST /satgas/hazards`
+- `GET /satgas/hazards/create`
+- `GET /satgas/hazards/{potentialHazardReport}`
+- `PATCH /satgas/hazards/{potentialHazardReport}/status`
+- CRUD satgas knowledge articles
 
 ## GitHub Actions
 
 Workflow CI ada di:
+
 - [.github/workflows/ci.yml](</c:/Users/Hafizh/Documents/Tugas Akhir/TA_K3L/.github/workflows/ci.yml:1>)
 
-CI saat ini menjalankan:
-- health check Laravel
-- build frontend Vite
-- backend test suite
-- compile check Blade template
+CI menjalankan:
 
-## Catatan Teknis
+- Composer install dan validasi aplikasi Laravel.
+- Migrasi dan seeder dengan SQLite in-memory.
+- Compile route dan Blade template.
+- Build frontend Vite.
+- Validasi file CSV testcase Postman.
 
-- Frontend asset dibangun dengan `Vite`
-- Testing memakai `Pest`
-- Test environment memakai `SQLite in-memory`
-- Upload cover knowledge dan lampiran memerlukan `php artisan storage:link`
-- Workflow CI memakai `PHP 8.4`
+## Command Verifikasi Lokal
+
+```bash
+php artisan migrate
+php artisan route:list --except-vendor
+php artisan view:cache
+npm run build
+```
+
+Automated test lama mungkin perlu disesuaikan ulang dengan perubahan portal publik dan perubahan field form laporan.
 
 ## Struktur Folder Penting
 
-- `app/Http/Controllers`
-  Logika controller per role
-- `app/Actions`
-  Action class untuk proses bisnis seperti create incident dan update status
-- `app/Support`
-  Penyusun data dashboard dan helper internal
-- `resources/views`
-  Blade view untuk user, satgas, admin, dan partial bersama
-- `routes/web.php`
-  Definisi route utama
-- `database/seeders`
-  Seeder role, reference data, knowledge, emergency center, dan akun default
-- `tests`
-  Unit test dan feature test
-
-## Pengembangan Lanjutan yang Disarankan
-
-- Tambahkan file `.env.testing` jika ingin memisahkan konfigurasi testing lokal
-- Pisahkan workflow CI untuk `code-style` jika ingin `Pint` dijalankan terpisah dari functional test
-- Tambahkan dokumentasi ERD dan screenshot antarmuka bila README ingin dijadikan dokumen TA yang lebih formal
-
-## Lisensi
-
-Project ini mengikuti lisensi yang digunakan oleh framework dan dependency terkait. Jika project ini dipakai untuk kebutuhan institusi atau tugas akhir, sesuaikan bagian lisensi dengan kebijakan kampus atau tim pengembang.
+- `app/Http/Controllers`: controller per role.
+- `app/Actions`: proses bisnis seperti create incident dan update status.
+- `app/Services`: integrasi eksternal seperti Fonnte WhatsApp.
+- `app/Support`: helper dashboard dan notifikasi.
+- `resources/views`: Blade view user, satgas, admin, dan partial.
+- `routes/web.php`: definisi route utama.
+- `database/migrations`: struktur database.
+- `database/seeders`: role, reference data, emergency center, knowledge, dan akun default.
+- `docs`: dokumen testcase dan pendukung pengujian.

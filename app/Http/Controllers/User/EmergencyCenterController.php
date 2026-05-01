@@ -15,7 +15,6 @@ class EmergencyCenterController extends Controller
 {
     public function __invoke(Request $request): View
     {
-        $user = $request->user();
         $emergencyContacts = collect();
         $responseSteps = collect();
         $firstAidGuides = collect();
@@ -42,12 +41,7 @@ class EmergencyCenterController extends Controller
                 ->get();
         }
 
-        $recentReports = IncidentReport::query()
-            ->with(['category', 'location'])
-            ->where('reported_by', $user->id)
-            ->latest()
-            ->take(4)
-            ->get();
+        $recentReports = collect();
 
         return view('user.emergency.index', compact('emergencyContacts', 'responseSteps', 'firstAidGuides', 'recentReports'));
     }

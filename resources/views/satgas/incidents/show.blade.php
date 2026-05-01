@@ -25,7 +25,7 @@
                 <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">Review Satgas</p>
                 <h2 class="mt-2 text-3xl font-semibold text-slate-900">{{ $incidentReport->title }}</h2>
                 <p class="mt-3 text-sm leading-7 text-slate-600">
-                    Laporan dari <span class="font-semibold text-slate-900">{{ $incidentReport->reporter?->name ?? '-' }}</span>
+                    Laporan dari <span class="font-semibold text-slate-900">{{ $incidentReport->reporter?->name ?? $incidentReport->reporter_name ?? '-' }}</span>
                     dengan nomor <span class="font-semibold text-slate-900">{{ $incidentReport->report_number }}</span>.
                 </p>
             </div>
@@ -85,6 +85,50 @@
                             <textarea id="verification_note" name="verification_note" rows="5"
                                 class="w-full rounded-3xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40"
                                 placeholder="Tambahkan catatan verifikasi, temuan awal, atau arahan tindak lanjut.">{{ old('verification_note') }}</textarea>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="injury_category_id" class="mb-2 block text-sm font-semibold text-slate-800">Kategori cedera</label>
+                                <select id="injury_category_id" name="injury_category_id"
+                                    class="w-full rounded-3xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40">
+                                    <option value="">Tidak ada / belum ditentukan</option>
+                                    @foreach ($injuryCategories as $injuryCategory)
+                                        <option value="{{ $injuryCategory->id }}" @selected(old('injury_category_id', $incidentReport->injury_category_id) == $injuryCategory->id)>
+                                            {{ $injuryCategory->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('injury_category_id')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="body_part_id" class="mb-2 block text-sm font-semibold text-slate-800">Bagian tubuh terdampak</label>
+                                <select id="body_part_id" name="body_part_id"
+                                    class="w-full rounded-3xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40">
+                                    <option value="">Tidak ada / belum ditentukan</option>
+                                    @foreach ($bodyParts as $bodyPart)
+                                        <option value="{{ $bodyPart->id }}" @selected(old('body_part_id', $incidentReport->body_part_id) == $bodyPart->id)>
+                                            {{ $bodyPart->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('body_part_id')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="impact" class="mb-2 block text-sm font-semibold text-slate-800">Dampak terkonfirmasi</label>
+                            <textarea id="impact" name="impact" rows="4"
+                                class="w-full rounded-3xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40"
+                                placeholder="Tuliskan dampak yang dikonfirmasi Satgas saat verifikasi.">{{ old('impact', $incidentReport->impact) }}</textarea>
+                            @error('impact')
+                                <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <button type="submit" class="inline-flex rounded-full bg-[var(--primary-color)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-deep)]">

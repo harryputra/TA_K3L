@@ -18,6 +18,9 @@ class VerifyIncidentReportRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'injury_category_id' => ['nullable', 'integer', 'exists:injury_categories,id'],
+            'body_part_id' => ['nullable', 'integer', 'exists:body_parts,id'],
+            'impact' => ['nullable', 'string', 'max:5000'],
             'verification_note' => ['nullable', 'string', 'max:2000'],
         ];
     }

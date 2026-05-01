@@ -9,7 +9,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Incident\StoreIncidentFollowUpRequest;
 use App\Http\Requests\Incident\UpdateIncidentStatusRequest;
 use App\Http\Requests\Incident\VerifyIncidentReportRequest;
+use App\Models\BodyPart;
 use App\Models\IncidentReport;
+use App\Models\InjuryCategory;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -72,6 +74,9 @@ class IncidentReviewController extends Controller
             'followUps.creator',
         ]);
 
+        $injuryCategories = InjuryCategory::query()->orderBy('name')->get();
+        $bodyParts = BodyPart::query()->orderBy('name')->get();
+
         $statusOptions = match ($incidentReport->status) {
             'submitted' => ['rejected' => 'Rejected'],
             'verified' => ['investigating' => 'Investigating', 'resolved' => 'Resolved', 'rejected' => 'Rejected'],
@@ -98,6 +103,8 @@ class IncidentReviewController extends Controller
             'statusOptions',
             'followUpStatusOptions',
             'assignableUsers',
+            'injuryCategories',
+            'bodyParts',
         ));
     }
 
@@ -107,6 +114,7 @@ class IncidentReviewController extends Controller
             $incidentReport,
             $request->user()->id,
             $request->string('verification_note')->toString() ?: null,
+            $request->safe()->only(['injury_category_id', 'body_part_id', 'impact']),
         );
 
         return redirect()

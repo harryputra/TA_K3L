@@ -27,13 +27,7 @@
             <a href="{{ route('admin.hazards.index') }}"
                 class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('admin.hazards.*') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
                 <span class="material-symbols-outlined text-[var(--primary-color)]">report</span>
-                <h6 class="font-bold text-[var(--primary-color)]">Hazard</h6>
-            </a>
-
-            <a href="{{ route('admin.knowledge-articles.index') }}"
-                class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('admin.knowledge-articles.*', 'admin.knowledge-categories.*') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
-                <span class="material-symbols-outlined text-[var(--primary-color)]">menu_book</span>
-                <h6 class="font-bold text-[var(--primary-color)]">Knowledge</h6>
+                <h6 class="font-bold text-[var(--primary-color)]">Pantau Hazard</h6>
             </a>
         </div>
 
@@ -50,30 +44,6 @@
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <a href="{{ route('admin.incidents.create') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('admin.incidents.create') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">note_add</span>
-                            Buat Laporan Insiden
-                        </a>
-
-                        <a href="{{ route('admin.hazards.create') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('admin.hazards.create') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">add_alert</span>
-                            Buat Hazard Report
-                        </a>
-
-                        <a href="{{ route('admin.locations.index') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('admin.locations.*') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">pin_drop</span>
-                            Lokasi
-                        </a>
-
-                        <a href="{{ route('admin.incident-categories.index') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('admin.incident-categories.*') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">category</span>
-                            Kategori Insiden
-                        </a>
-
                         <a href="{{ route('admin.emergency-contacts.index') }}"
                             class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('admin.emergency-contacts.*', 'admin.emergency-response-steps.*', 'admin.first-aid-guides.*') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
                             <span class="material-symbols-outlined text-[var(--primary-color)]">emergency_home</span>

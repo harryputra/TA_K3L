@@ -9,13 +9,16 @@ class StorePotentialHazardReportRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     public function rules(): array
     {
         return [
             'title' => ['required', 'string', 'max:200'],
+            'reporter_name' => ['required', 'string', 'max:150'],
+            'reporter_email' => ['required', 'email:rfc', 'max:150'],
+            'reporter_whatsapp' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
             'hazard_type' => ['required', Rule::in(['lingkungan', 'peralatan', 'listrik', 'zat-kimia'])],
             'location_id' => ['required', 'integer', 'exists:locations,id'],
             'specific_location' => ['nullable', 'string', 'max:255'],
@@ -30,9 +33,23 @@ class StorePotentialHazardReportRequest extends FormRequest
         return [
             'hazard_type.in' => 'Jenis temuan yang dipilih tidak valid.',
             'location_id.exists' => 'Lokasi yang dipilih tidak valid.',
+            'reporter_whatsapp.regex' => 'Nomor WhatsApp hanya boleh berisi angka, spasi, +, -, dan tanda kurung.',
             'attachments.max' => 'Jumlah lampiran maksimal 3 file.',
             'attachments.*.mimes' => 'Lampiran hanya boleh berupa JPG, JPEG, atau PNG.',
             'attachments.*.max' => 'Ukuran tiap lampiran maksimal 5 MB.',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (! $this->user()) {
+            return;
+        }
+
+        $this->merge([
+            'reporter_name' => $this->input('reporter_name') ?: $this->user()->name,
+            'reporter_email' => $this->input('reporter_email') ?: $this->user()->email,
+            'reporter_whatsapp' => $this->input('reporter_whatsapp') ?: ($this->user()->phone ?? '-'),
+        ]);
     }
 }

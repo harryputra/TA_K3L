@@ -31,6 +31,47 @@
                 <div class="space-y-6">
                     <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
                         <div class="mb-5 flex items-center gap-3">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                                <span class="material-symbols-outlined">contact_mail</span>
+                            </span>
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-900">Identitas pelapor</h3>
+                                <p class="text-sm text-slate-500">Pembaruan status hazard akan dikirim ke kontak aktif yang Anda isi.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid gap-5 md:grid-cols-3">
+                            <div>
+                                <label for="hazard-reporter-name" class="mb-2 block text-sm font-bold text-slate-700">Nama lengkap</label>
+                                <input id="hazard-reporter-name" name="reporter_name" type="text" value="{{ old('reporter_name', auth()->user()?->name) }}"
+                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                @error('reporter_name')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="hazard-reporter-email" class="mb-2 block text-sm font-bold text-slate-700">Email aktif</label>
+                                <input id="hazard-reporter-email" name="reporter_email" type="email" value="{{ old('reporter_email', auth()->user()?->email) }}"
+                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                @error('reporter_email')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="hazard-reporter-whatsapp" class="mb-2 block text-sm font-bold text-slate-700">No. WhatsApp aktif</label>
+                                <input id="hazard-reporter-whatsapp" name="reporter_whatsapp" type="text" value="{{ old('reporter_whatsapp', auth()->user()?->phone) }}" placeholder="08xxxxxxxxxx"
+                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                @error('reporter_whatsapp')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
+                        <div class="mb-5 flex items-center gap-3">
                             <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--blue-low-opacity)] text-[var(--primary-color)]">
                                 <span class="material-symbols-outlined">warning</span>
                             </span>

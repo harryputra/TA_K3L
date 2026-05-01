@@ -11,15 +11,18 @@ return new class extends Migration
         Schema::create('incident_reports', function (Blueprint $table) {
             $table->id();
             $table->string('report_number', 100)->unique();
-            $table->foreignId('reported_by')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('reported_by')->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
+            $table->string('reporter_name', 150)->nullable();
+            $table->string('reporter_email', 150)->nullable();
+            $table->string('reporter_whatsapp', 30)->nullable();
             $table->foreignId('victim_user_id')->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
-            $table->foreignId('incident_category_id')->constrained('incident_categories')->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('incident_category_id')->nullable()->constrained('incident_categories')->cascadeOnUpdate()->nullOnDelete();
             $table->foreignId('injury_category_id')->nullable()->constrained('injury_categories')->cascadeOnUpdate()->nullOnDelete();
             $table->foreignId('body_part_id')->nullable()->constrained('body_parts')->cascadeOnUpdate()->nullOnDelete();
             $table->foreignId('location_id')->constrained('locations')->cascadeOnUpdate()->restrictOnDelete();
             $table->date('incident_date');
             $table->time('incident_time')->nullable();
-            $table->enum('severity_level', ['low', 'medium', 'high', 'critical']);
+            $table->enum('severity_level', ['low', 'medium', 'high', 'critical'])->nullable();
             $table->string('title', 200);
             $table->longText('chronology');
             $table->longText('cause')->nullable();
@@ -46,7 +49,7 @@ return new class extends Migration
             $table->string('file_path');
             $table->string('file_type', 100);
             $table->unsignedBigInteger('file_size');
-            $table->foreignId('uploaded_by')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('uploaded_by')->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
             $table->timestamps();
         });
 
@@ -55,7 +58,7 @@ return new class extends Migration
             $table->foreignId('incident_report_id')->constrained('incident_reports')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('from_status', 30)->nullable();
             $table->string('to_status', 30);
-            $table->foreignId('changed_by')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('changed_by')->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
             $table->text('change_note')->nullable();
             $table->timestamp('created_at');
         });

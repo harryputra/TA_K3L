@@ -73,7 +73,7 @@
                         @forelse ($reports as $report)
                             <tr>
                                 <td class="px-6 py-4 font-medium text-slate-900">{{ $report->report_number }}</td>
-                                <td class="px-6 py-4 text-slate-700">{{ $report->reporter?->name ?? '-' }}</td>
+                                <td class="px-6 py-4 text-slate-700">{{ $report->reporter?->name ?? $report->reporter_name ?? '-' }}</td>
                                 <td class="px-6 py-4 text-slate-700">{{ $report->title }}</td>
                                 <td class="px-6 py-4 text-slate-700">{{ $report->location?->name ?? '-' }}</td>
                                 <td class="px-6 py-4">

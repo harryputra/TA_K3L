@@ -3,36 +3,40 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Support\Dashboard\UserDashboardData;
+use App\Models\EmergencyContact;
+use App\Models\KnowledgeArticle;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request, UserDashboardData $dashboardData): View
+    public function __invoke(Request $request): View
     {
-        $user = $request->user();
-
-        [
-            'stats' => $stats,
-            'recentReports' => $recentReports,
-            'recentHazardReports' => $recentHazardReports,
-            'publishedKnowledgeCount' => $publishedKnowledgeCount,
-            'latestReportSummary' => $latestReportSummary,
-            'latestHazardSummary' => $latestHazardSummary,
-            'featuredKnowledge' => $featuredKnowledge,
-            'knowledgeRecommendations' => $knowledgeRecommendations,
-        ] = $dashboardData->build($user->id);
+        $publishedKnowledgeCount = KnowledgeArticle::query()
+            ->where('status', 'published')
+            ->count();
+        $featuredKnowledge = KnowledgeArticle::query()
+            ->with('category')
+            ->where('status', 'published')
+            ->latest('published_at')
+            ->first();
+        $knowledgeRecommendations = KnowledgeArticle::query()
+            ->with('category')
+            ->where('status', 'published')
+            ->latest('published_at')
+            ->take(3)
+            ->get();
+        $emergencyContacts = EmergencyContact::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->take(3)
+            ->get();
 
         return view('user.dashboard', compact(
-            'stats',
-            'recentReports',
-            'recentHazardReports',
             'publishedKnowledgeCount',
-            'latestReportSummary',
-            'latestHazardSummary',
             'featuredKnowledge',
             'knowledgeRecommendations',
+            'emergencyContacts',
         ));
     }
 }

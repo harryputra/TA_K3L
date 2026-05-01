@@ -18,7 +18,7 @@
                 <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">Admin Hazard Monitoring</p>
                 <h2 class="mt-2 text-3xl font-semibold text-slate-900">{{ $hazardReport->title }}</h2>
                 <p class="mt-3 text-sm leading-7 text-slate-600">
-                    Laporan dari <span class="font-semibold text-slate-900">{{ $hazardReport->reporter?->name ?? '-' }}</span>
+                    Laporan dari <span class="font-semibold text-slate-900">{{ $hazardReport->reporter?->name ?? $hazardReport->reporter_name ?? '-' }}</span>
                     dengan nomor <span class="font-semibold text-slate-900">{{ $hazardReport->report_number }}</span>.
                 </p>
             </div>
@@ -36,7 +36,7 @@
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Pelapor</p>
-                        <p class="mt-2 text-slate-800">{{ $hazardReport->reporter?->name ?? '-' }}</p>
+                        <p class="mt-2 text-slate-800">{{ $hazardReport->reporter?->name ?? $hazardReport->reporter_name ?? '-' }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Status</p>

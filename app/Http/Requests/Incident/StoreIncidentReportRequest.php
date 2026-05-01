@@ -9,7 +9,7 @@ class StoreIncidentReportRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /**
@@ -19,19 +19,18 @@ class StoreIncidentReportRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:200'],
-            'incident_category_id' => ['required', 'integer', 'exists:incident_categories,id'],
-            'injury_category_id' => ['nullable', 'integer', 'exists:injury_categories,id'],
-            'body_part_id' => ['nullable', 'integer', 'exists:body_parts,id'],
+            'reporter_name' => ['required', 'string', 'max:150'],
+            'reporter_email' => ['required', 'email:rfc', 'max:150'],
+            'reporter_whatsapp' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
+            'incident_category_id' => ['nullable', 'integer', 'exists:incident_categories,id'],
             'location_id' => ['required', 'integer', 'exists:locations,id'],
             'incident_date' => ['required', 'date', 'before_or_equal:today'],
-            'incident_time' => ['nullable', 'date_format:H:i'],
-            'severity_level' => ['required', Rule::in(['low', 'medium', 'high', 'critical'])],
-            'victim_type' => ['required', Rule::in(['self', 'other'])],
+            'severity_level' => ['nullable', Rule::in(['low', 'medium', 'high', 'critical'])],
+            'victim_type' => ['nullable', Rule::in(['self', 'other'])],
             'victim_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'chronology' => ['required', 'string', 'min:30'],
             'cause' => ['nullable', 'string', 'max:5000'],
             'initial_action' => ['nullable', 'string', 'max:5000'],
-            'impact' => ['nullable', 'string', 'max:5000'],
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf,doc,docx', 'max:5120'],
         ];
@@ -43,6 +42,7 @@ class StoreIncidentReportRequest extends FormRequest
             'incident_category_id.exists' => 'Kategori insiden yang dipilih tidak valid.',
             'location_id.exists' => 'Lokasi kejadian yang dipilih tidak valid.',
             'incident_date.before_or_equal' => 'Tanggal kejadian tidak boleh melebihi hari ini.',
+            'reporter_whatsapp.regex' => 'Nomor WhatsApp hanya boleh berisi angka, spasi, +, -, dan tanda kurung.',
             'chronology.min' => 'Kronologi minimal 30 karakter agar laporan cukup informatif.',
             'attachments.*.max' => 'Ukuran tiap lampiran maksimal 5 MB.',
         ];
@@ -50,7 +50,15 @@ class StoreIncidentReportRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->input('victim_type') === 'self') {
+        if ($this->user()) {
+            $this->merge([
+                'reporter_name' => $this->input('reporter_name') ?: $this->user()->name,
+                'reporter_email' => $this->input('reporter_email') ?: $this->user()->email,
+                'reporter_whatsapp' => $this->input('reporter_whatsapp') ?: ($this->user()->phone ?? '-'),
+            ]);
+        }
+
+        if ($this->user() && $this->input('victim_type') === 'self') {
             $this->merge([
                 'victim_user_id' => $this->user()?->id,
             ]);

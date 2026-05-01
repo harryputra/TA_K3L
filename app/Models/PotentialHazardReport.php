@@ -11,6 +11,9 @@ class PotentialHazardReport extends Model
     protected $fillable = [
         'report_number',
         'reported_by',
+        'reporter_name',
+        'reporter_email',
+        'reporter_whatsapp',
         'reviewed_by',
         'resolved_by',
         'location_id',

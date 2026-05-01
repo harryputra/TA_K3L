@@ -4,6 +4,7 @@ namespace App\Actions\Hazards;
 
 use App\Models\PotentialHazardReport;
 use App\Support\ActivityLogger;
+use App\Support\WhatsAppReportNotifier;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -11,6 +12,7 @@ class UpdatePotentialHazardReportStatus
 {
     public function __construct(
         protected ActivityLogger $activityLogger,
+        protected WhatsAppReportNotifier $whatsAppReportNotifier,
     ) {
     }
 
@@ -40,18 +42,22 @@ class UpdatePotentialHazardReportStatus
 
             $report->update($attributes);
 
-            $this->activityLogger->log(
-                $report->reported_by,
-                $actorId,
-                'hazard_status_updated',
-                'Status hazard report diperbarui',
-                $note,
-                $report,
-                [
-                    'to_status' => $status,
-                    'report_number' => $report->report_number,
-                ],
-            );
+            if ($report->reported_by !== null) {
+                $this->activityLogger->log(
+                    $report->reported_by,
+                    $actorId,
+                    'hazard_status_updated',
+                    'Status hazard report diperbarui',
+                    $note,
+                    $report,
+                    [
+                        'to_status' => $status,
+                        'report_number' => $report->report_number,
+                    ],
+                );
+            }
+
+            $this->whatsAppReportNotifier->hazardStatusUpdated($report, $status, $note);
 
             return $report->fresh([
                 'reporter.role',

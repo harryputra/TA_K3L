@@ -11,7 +11,10 @@ return new class extends Migration
         Schema::create('potential_hazard_reports', function (Blueprint $table) {
             $table->id();
             $table->string('report_number', 100)->unique();
-            $table->foreignId('reported_by')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('reported_by')->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
+            $table->string('reporter_name', 150)->nullable();
+            $table->string('reporter_email', 150)->nullable();
+            $table->string('reporter_whatsapp', 30)->nullable();
             $table->foreignId('location_id')->constrained('locations')->cascadeOnUpdate()->restrictOnDelete();
             $table->string('hazard_type', 50);
             $table->string('title', 200);
@@ -32,7 +35,7 @@ return new class extends Migration
             $table->string('file_path');
             $table->string('file_type', 100);
             $table->unsignedBigInteger('file_size');
-            $table->foreignId('uploaded_by')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('uploaded_by')->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
             $table->timestamps();
         });
     }

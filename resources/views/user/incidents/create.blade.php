@@ -27,7 +27,7 @@
             'panelTitle' => 'Susun laporan insiden dengan struktur yang lebih jelas',
             'panelDescription' => 'Lengkapi identitas kejadian, uraian kronologi, dan bukti pendukung agar Satgas dapat melakukan verifikasi serta tindak lanjut dengan lebih cepat.',
             'summaryTips' => [
-                ['label' => 'Pelapor', 'value' => 'Akun Anda akan tercatat otomatis sebagai pengirim laporan.'],
+                ['label' => 'Pelapor', 'value' => 'Isi kontak aktif agar pembaruan status dapat dikirim.'],
                 ['label' => 'Lampiran', 'value' => 'Maksimal 3 file untuk memudahkan verifikasi awal.'],
                 ['label' => 'Status Awal', 'value' => 'Laporan akan masuk ke antrean review Satgas.'],
             ],

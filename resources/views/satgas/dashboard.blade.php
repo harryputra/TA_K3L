@@ -430,7 +430,7 @@
                                         </span>
                                     </div>
                                     <p class="mt-2 text-sm text-slate-500">
-                                        {{ $report->report_number }} - {{ $report->reporter?->name ?? '-' }} - {{ $report->location?->name ?? '-' }}
+                                        {{ $report->report_number }} - {{ $report->reporter?->name ?? $report->reporter_name ?? '-' }} - {{ $report->location?->name ?? '-' }}
                                     </p>
                                     <p class="mt-1 text-sm text-slate-500">Status: {{ str_replace('_', ' ', $report->status) }}</p>
                                 </div>

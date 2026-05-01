@@ -77,12 +77,12 @@ class PotentialHazardReportController extends Controller
     {
         $report = $this->createPotentialHazardReport->handle(
             $request->validated(),
-            $request->user()->id,
+            $request->user()?->id,
         );
 
         return redirect()
             ->route('user.hazards.create')
-            ->with('status', "Laporan potensi bahaya {$report->report_number} berhasil dikirim.");
+            ->with('status', "Laporan potensi bahaya {$report->report_number} berhasil dikirim. Status akan diinformasikan melalui email dan WhatsApp yang Anda isi.");
     }
 
 }

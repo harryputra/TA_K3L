@@ -5,6 +5,7 @@ namespace App\Actions\Incidents;
 use App\Models\IncidentAttachment;
 use App\Models\IncidentReport;
 use App\Support\ActivityLogger;
+use App\Support\WhatsAppReportNotifier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -13,10 +14,11 @@ class CreateIncidentReport
 {
     public function __construct(
         protected ActivityLogger $activityLogger,
+        protected WhatsAppReportNotifier $whatsAppReportNotifier,
     ) {
     }
 
-    public function handle(array $validated, int $reporterId): IncidentReport
+    public function handle(array $validated, ?int $reporterId = null): IncidentReport
     {
         return DB::transaction(function () use ($validated, $reporterId) {
             $attachments = $validated['attachments'] ?? [];
@@ -42,18 +44,23 @@ class CreateIncidentReport
                 'created_at' => now(),
             ]);
 
-            $this->activityLogger->log(
-                $reporterId,
-                $reporterId,
-                'incident_created',
-                'Laporan insiden berhasil dikirim',
-                "Laporan {$report->report_number} dengan judul \"{$report->title}\" sedang menunggu review Satgas.",
-                $report,
-                [
-                    'status' => 'submitted',
-                    'report_number' => $report->report_number,
-                ],
-            );
+            if ($reporterId !== null) {
+                $this->activityLogger->log(
+                    $reporterId,
+                    $reporterId,
+                    'incident_created',
+                    'Laporan insiden berhasil dikirim',
+                    "Laporan {$report->report_number} dengan judul \"{$report->title}\" sedang menunggu review Satgas.",
+                    $report,
+                    [
+                        'status' => 'submitted',
+                        'report_number' => $report->report_number,
+                    ],
+                );
+            }
+
+            $this->whatsAppReportNotifier->incidentCreated($report);
+            $this->whatsAppReportNotifier->satgasIncidentCreated($report);
 
             return $report->load(['category', 'location', 'attachments']);
         });
@@ -64,7 +71,7 @@ class CreateIncidentReport
         return 'INC-' . now()->format('Ymd-His') . '-' . Str::upper(Str::random(5));
     }
 
-    protected function storeAttachment(IncidentReport $report, UploadedFile $attachment, int $reporterId): void
+    protected function storeAttachment(IncidentReport $report, UploadedFile $attachment, ?int $reporterId): void
     {
         $path = $attachment->store('incident-attachments', 'public');
 

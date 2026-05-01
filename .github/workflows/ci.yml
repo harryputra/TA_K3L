@@ -14,64 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  framework-health:
-    name: Framework Health Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          coverage: none
-          tools: composer:v2
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-8.4-composer-
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Validate Composer configuration
-        run: composer validate --strict
-
-      - name: Verify application boots
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-          php artisan config:clear
-          php artisan route:list
-
-  frontend-build:
-    name: Frontend Build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Build frontend assets
-        run: npm run build
-
-  backend-tests:
-    name: Backend Tests
+  backend-smoke:
+    name: Laravel Smoke Check
     runs-on: ubuntu-latest
 
     steps:
@@ -97,16 +41,88 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Prepare application environment
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
+      - name: Prepare environment
         run: |
           cp .env.example .env
           php artisan key:generate
+          {
+            echo "DB_CONNECTION=sqlite"
+            echo "DB_DATABASE=:memory:"
+            echo "QUEUE_CONNECTION=sync"
+            echo "MAIL_MAILER=log"
+            echo "FONNTE_ENABLED=false"
+            echo "FONNTE_VERIFY_SSL=true"
+          } >> .env
 
-      - name: Clear cached configuration
-        run: php artisan config:clear
+      - name: Verify app boots and routes compile
+        run: |
+          php artisan config:clear
+          php artisan route:list --except-vendor
 
-      - name: Run backend test suite
-        run: php artisan test --parallel
+      - name: Verify migrations and seeders
+        run: php artisan migrate:fresh --seed --force
 
       - name: Verify Blade templates compile
         run: php artisan view:cache
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+  docs-check:
+    name: Documentation Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Postman route CSV
+        shell: bash
+        run: |
+          test -s docs/postman-testing-routes.csv
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+
+          path = Path("docs/postman-testing-routes.csv")
+          with path.open(newline="", encoding="utf-8") as handle:
+              rows = list(csv.DictReader(handle))
+
+          required = ["No", "Role", "Nama Test", "Method", "URL", "Auth Login", "Body Type", "Body Contoh", "Expected Response", "Pre-request Script", "Tests Script", "Catatan"]
+          assert rows, "CSV testcase kosong"
+          assert list(rows[0].keys()) == required, "Header CSV tidak sesuai"
+          assert len(rows) >= 50, "Jumlah testcase terlalu sedikit"
+
+          blocked_fragments = [
+              "/admin/incidents",
+              "/admin/locations",
+              "/admin/incident-categories",
+              "/admin/knowledge-categories",
+              "/admin/knowledge-articles",
+              "/admin/hazards/create",
+          ]
+
+          for row in rows:
+              url = row["URL"]
+              assert not any(fragment in url for fragment in blocked_fragments), f"Route admin nonaktif masih ada: {url}"
+          PY

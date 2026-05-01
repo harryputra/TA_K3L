@@ -1,12 +1,3 @@
-@php
-    $severityPalette = [
-        'low' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
-        'medium' => 'border-amber-200 bg-amber-50 text-amber-700',
-        'high' => 'border-orange-200 bg-orange-50 text-orange-700',
-        'critical' => 'border-rose-200 bg-rose-50 text-rose-700',
-    ];
-@endphp
-
 <section class="relative w-full overflow-hidden px-4 pb-20 pt-10 lg:px-8">
     <div class="mx-auto w-full max-w-[1600px]">
         @isset($showInlineFlash)
@@ -41,6 +32,47 @@
                 <div class="space-y-6">
                     <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
                         <div class="mb-5 flex items-center gap-3">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                                <span class="material-symbols-outlined">contact_mail</span>
+                            </span>
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-900">Identitas pelapor</h3>
+                                <p class="text-sm text-slate-500">Data ini dipakai untuk mengirim pembaruan status melalui email dan WhatsApp.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid gap-5 md:grid-cols-3">
+                            <div>
+                                <label for="reporter_name" class="mb-2 block text-sm font-bold text-slate-700">Nama lengkap</label>
+                                <input id="reporter_name" name="reporter_name" type="text" value="{{ old('reporter_name', auth()->user()?->name) }}"
+                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                @error('reporter_name')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="reporter_email" class="mb-2 block text-sm font-bold text-slate-700">Email aktif</label>
+                                <input id="reporter_email" name="reporter_email" type="email" value="{{ old('reporter_email', auth()->user()?->email) }}"
+                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                @error('reporter_email')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="reporter_whatsapp" class="mb-2 block text-sm font-bold text-slate-700">No. WhatsApp aktif</label>
+                                <input id="reporter_whatsapp" name="reporter_whatsapp" type="text" value="{{ old('reporter_whatsapp', auth()->user()?->phone) }}" placeholder="08xxxxxxxxxx"
+                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                @error('reporter_whatsapp')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
+                        <div class="mb-5 flex items-center gap-3">
                             <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--blue-low-opacity)] text-[var(--primary-color)]">
                                 <span class="material-symbols-outlined">description</span>
                             </span>
@@ -61,15 +93,6 @@
                             </div>
 
                             <div>
-                                <label for="incident_time" class="mb-2 block text-sm font-bold text-slate-700">Jam kejadian</label>
-                                <input id="incident_time" name="incident_time" type="time" value="{{ old('incident_time') }}"
-                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
-                                @error('incident_time')
-                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div>
                                 <label for="location_id" class="mb-2 block text-sm font-bold text-slate-700">Lokasi kejadian</label>
                                 <select id="location_id" name="location_id"
                                     class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
@@ -83,105 +106,12 @@
                                 @enderror
                             </div>
 
-                            <div>
-                                <label for="incident_category_id" class="mb-2 block text-sm font-bold text-slate-700">Kategori insiden</label>
-                                <select id="incident_category_id" name="incident_category_id"
-                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
-                                    <option value="">Pilih kategori</option>
-                                    @foreach ($categories as $category)
-                                        <option value="{{ $category->id }}" @selected(old('incident_category_id') == $category->id)>{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('incident_category_id')
-                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
                             <div class="md:col-span-2">
                                 <label for="title" class="mb-2 block text-sm font-bold text-slate-700">Judul atau kondisi utama</label>
                                 <input id="title" name="title" type="text" value="{{ old('title') }}"
                                     placeholder="Contoh: Operator mengalami luka ringan saat perawatan mesin"
                                     class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
                                 @error('title')
-                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
-                        <div class="mb-5 flex items-center gap-3">
-                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-                                <span class="material-symbols-outlined">priority_high</span>
-                            </span>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Level dampak</h3>
-                                <p class="text-sm text-slate-500">Pilih tingkat keparahan agar prioritas respons lebih tepat.</p>
-                            </div>
-                        </div>
-
-                        <div class="grid gap-4 md:grid-cols-4">
-                            @foreach ($severityOptions as $severityKey => $severityLabel)
-                                <label class="block cursor-pointer">
-                                    <input type="radio" name="severity_level" value="{{ $severityKey }}" class="peer sr-only"
-                                        @checked(old('severity_level', 'medium') === $severityKey)>
-                                    <div class="rounded-[1.35rem] border px-4 py-4 transition peer-checked:-translate-y-0.5 peer-checked:shadow-sm {{ $severityPalette[$severityKey] ?? 'border-slate-200 bg-slate-50 text-slate-700' }}">
-                                        <p class="text-xs font-semibold uppercase tracking-[0.24em]">Severity</p>
-                                        <p class="mt-2 text-lg font-bold">{{ $severityLabel }}</p>
-                                    </div>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('severity_level')
-                            <p class="mt-3 text-sm font-medium text-rose-600">{{ $message }}</p>
-                        @enderror
-                    </section>
-
-                    <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
-                        <div class="mb-5 flex items-center gap-3">
-                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                                <span class="material-symbols-outlined">health_and_safety</span>
-                            </span>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Detail korban dan dampak</h3>
-                                <p class="text-sm text-slate-500">Bagian ini opsional, tapi sangat membantu analisis Satgas.</p>
-                            </div>
-                        </div>
-
-                        <div class="grid gap-5 md:grid-cols-2">
-                            <div>
-                                <label for="injury_category_id" class="mb-2 block text-sm font-bold text-slate-700">Kategori cedera</label>
-                                <select id="injury_category_id" name="injury_category_id"
-                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
-                                    <option value="">Pilih kategori cedera</option>
-                                    @foreach ($injuryCategories as $injuryCategory)
-                                        <option value="{{ $injuryCategory->id }}" @selected(old('injury_category_id') == $injuryCategory->id)>{{ $injuryCategory->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('injury_category_id')
-                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label for="body_part_id" class="mb-2 block text-sm font-bold text-slate-700">Bagian tubuh terdampak</label>
-                                <select id="body_part_id" name="body_part_id"
-                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
-                                    <option value="">Pilih bagian tubuh</option>
-                                    @foreach ($bodyParts as $bodyPart)
-                                        <option value="{{ $bodyPart->id }}" @selected(old('body_part_id') == $bodyPart->id)>{{ $bodyPart->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('body_part_id')
-                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label for="impact" class="mb-2 block text-sm font-bold text-slate-700">Dampak kejadian</label>
-                                <textarea id="impact" name="impact" rows="3" placeholder="Jelaskan dampak pada korban, alat, atau proses kerja."
-                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">{{ old('impact') }}</textarea>
-                                @error('impact')
                                     <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -201,7 +131,14 @@
 
                         <div class="grid gap-5">
                             <div>
-                                <label for="chronology" class="mb-2 block text-sm font-bold text-slate-700">Kronologi kejadian</label>
+                                <div class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <label for="chronology" class="block text-sm font-bold text-slate-700">Kronologi kejadian</label>
+                                    <button type="button" data-voice-target="chronology"
+                                        class="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--primary-color)]/15 bg-white px-4 py-2 text-xs font-bold text-[var(--primary-color)] transition hover:bg-[var(--blue-low-opacity)]">
+                                        <span class="material-symbols-outlined text-base" data-voice-icon>mic</span>
+                                        <span data-voice-label>Voice to Text</span>
+                                    </button>
+                                </div>
                                 <textarea id="chronology" name="chronology" rows="5" placeholder="Ceritakan urutan kejadian dengan jelas dan runtut."
                                     class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">{{ old('chronology') }}</textarea>
                                 @error('chronology')
@@ -337,6 +274,79 @@
             };
 
             input.addEventListener('change', renderFiles);
+        })();
+
+        (() => {
+            const button = document.querySelector('[data-voice-target="chronology"]');
+            const textarea = document.getElementById('chronology');
+            const icon = button?.querySelector('[data-voice-icon]');
+            const label = button?.querySelector('[data-voice-label]');
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (!button || !textarea || !SpeechRecognition) {
+                if (button) {
+                    button.disabled = true;
+                    button.classList.add('opacity-50', 'cursor-not-allowed');
+                    button.title = 'Voice to text belum didukung browser ini';
+                }
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'id-ID';
+            recognition.interimResults = false;
+            recognition.continuous = false;
+
+            let isListening = false;
+
+            recognition.addEventListener('start', () => {
+                isListening = true;
+                textarea.focus();
+                button.classList.remove('border-[var(--primary-color)]/15', 'bg-white', 'text-[var(--primary-color)]', 'hover:bg-[var(--blue-low-opacity)]');
+                button.classList.add('border-rose-600', 'bg-rose-600', 'text-white', 'hover:bg-rose-700');
+                if (icon) {
+                    icon.textContent = 'stop_circle';
+                }
+                if (label) {
+                    label.textContent = 'Stop';
+                }
+            });
+
+            recognition.addEventListener('end', () => {
+                isListening = false;
+                button.classList.remove('border-rose-600', 'bg-rose-600', 'text-white', 'hover:bg-rose-700');
+                button.classList.add('border-[var(--primary-color)]/15', 'bg-white', 'text-[var(--primary-color)]', 'hover:bg-[var(--blue-low-opacity)]');
+                if (icon) {
+                    icon.textContent = 'mic';
+                }
+                if (label) {
+                    label.textContent = 'Voice to Text';
+                }
+            });
+
+            recognition.addEventListener('result', (event) => {
+                const transcript = Array.from(event.results)
+                    .map((result) => result[0]?.transcript || '')
+                    .join(' ')
+                    .trim();
+
+                if (transcript !== '') {
+                    textarea.value = textarea.value.trim() === ''
+                        ? transcript
+                        : `${textarea.value.trim()} ${transcript}`;
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+
+            button.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                    return;
+                }
+
+                textarea.focus();
+                recognition.start();
+            });
         })();
     </script>
 @endpush

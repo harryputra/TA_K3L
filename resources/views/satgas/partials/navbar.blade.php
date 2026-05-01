@@ -50,6 +50,12 @@
                     </div>
 
                     <div class="flex flex-col gap-1">
+                        <a href="{{ route('satgas.profile.show') }}"
+                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('satgas.profile.*') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
+                            <span class="material-symbols-outlined text-[var(--primary-color)]">account_circle</span>
+                            Profil Satgas
+                        </a>
+
                         <a href="{{ route('satgas.incidents.create') }}"
                             class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('satgas.incidents.create') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
                             <span class="material-symbols-outlined text-[var(--primary-color)]">note_add</span>
@@ -81,7 +87,7 @@
             </details>
 
             <span class="hidden h-13 w-px rounded-full bg-slate-300 sm:block"></span>
-            <div
+            <a href="{{ route('satgas.profile.show') }}"
                 class="flex h-15 w-auto items-center gap-3 rounded-full bg-[var(--primary-color)] px-3 py-3 shadow-[0_15px_30px_rgba(10,77,179,0.24)]">
                 <span
                     class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 font-bold text-white">{{ $initials !== '' ? $initials : 'S' }}</span>
@@ -89,7 +95,7 @@
                     <h6 class="font-bold text-white">{{ $user->name }}</h6>
                     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">{{ $user->role?->name ?? 'Satgas' }}</p>
                 </div>
-            </div>
+            </a>
         </div>
     </nav>
 </div>

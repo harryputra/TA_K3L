@@ -14,6 +14,9 @@ class IncidentReport extends Model
     protected $fillable = [
         'report_number',
         'reported_by',
+        'reporter_name',
+        'reporter_email',
+        'reporter_whatsapp',
         'victim_user_id',
         'incident_category_id',
         'injury_category_id',

@@ -80,7 +80,7 @@
                             </div>
                             <div>
                                 <dt class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Pelapor</dt>
-                                <dd class="mt-2 text-sm text-slate-800">{{ $incidentReport->reporter?->name ?? '-' }}</dd>
+                                <dd class="mt-2 text-sm text-slate-800">{{ $incidentReport->reporter?->name ?? $incidentReport->reporter_name ?? '-' }}</dd>
                             </div>
                             <div>
                                 <dt class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Korban</dt>
@@ -120,9 +120,9 @@
                             <div class="rounded-xl bg-white/10 px-4 py-4 text-sm leading-7 text-white/90">
                                 Pantau riwayat status untuk melihat apakah Satgas menambahkan catatan verifikasi atau tindak lanjut.
                             </div>
-                            <a href="{{ route('user.incidents.index') }}"
+                            <a href="{{ route('user.incidents.status', ['q' => $incidentReport->report_number]) }}"
                                 class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[var(--primary-color)]">
-                                Kembali ke riwayat laporan
+                                Kembali ke status laporan
                                 <span class="material-symbols-outlined text-base">arrow_back</span>
                             </a>
                         </div>
