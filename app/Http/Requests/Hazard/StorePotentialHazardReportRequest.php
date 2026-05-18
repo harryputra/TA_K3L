@@ -46,10 +46,15 @@ class StorePotentialHazardReportRequest extends FormRequest
             return;
         }
 
+        $phone = $this->user()->phone;
+        $whatsapp = $this->input('reporter_whatsapp') ?: (
+            $phone && preg_match('/^[0-9+\-\s()]+$/', $phone) ? $phone : '0'
+        );
+
         $this->merge([
             'reporter_name' => $this->input('reporter_name') ?: $this->user()->name,
             'reporter_email' => $this->input('reporter_email') ?: $this->user()->email,
-            'reporter_whatsapp' => $this->input('reporter_whatsapp') ?: ($this->user()->phone ?? '-'),
+            'reporter_whatsapp' => $whatsapp,
         ]);
     }
 }

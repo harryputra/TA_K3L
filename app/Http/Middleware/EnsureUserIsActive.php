@@ -12,11 +12,7 @@ class EnsureUserIsActive
     {
         $user = $request->user();
 
-        if (! $user) {
-            abort(401);
-        }
-
-        if (! $user->is_active) {
+        if ($user && ! $user->is_active) {
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 

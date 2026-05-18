@@ -12,12 +12,13 @@
             ['label' => 'Satgas Aktif', 'value' => $stats['satgas_count'], 'hint' => 'Personel verifikasi dan tindak lanjut.', 'icon' => 'shield_person', 'tone' => 'text-[var(--green)]'],
             ['label' => 'Role Sistem', 'value' => $stats['role_count'], 'hint' => 'Peran akses yang tersedia.', 'icon' => 'admin_panel_settings', 'tone' => 'text-[var(--primary-color)]'],
             ['label' => 'Kontak Darurat', 'value' => $stats['emergency_contacts'], 'hint' => 'Kontak aktif pada pusat darurat.', 'icon' => 'emergency_home', 'tone' => 'text-[var(--red)]'],
+            ['label' => 'Materi K3', 'value' => $stats['published_knowledge'], 'hint' => 'Konten pembelajaran yang sudah dipublikasikan.', 'icon' => 'school', 'tone' => 'text-[var(--green)]'],
             ['label' => 'Hazard Report', 'value' => $stats['hazard_reports'], 'hint' => 'Data pantauan, bukan area kelola admin.', 'icon' => 'report', 'tone' => 'text-[var(--yellow)]'],
         ];
     @endphp
 
     <section class="grid gap-6">
-        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
             @foreach ($summaryCards as $card)
                 <article class="ambient-card rounded-[1.7rem] px-6 py-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-white/80">
                     <div class="flex items-start justify-between gap-4">
@@ -111,7 +112,7 @@
                     </div>
 
                     <div class="mt-6 rounded-[1.7rem] bg-white/10 p-6">
-                        <p class="text-sm font-semibold uppercase tracking-[0.28em] text-white/75">Ringkasan Sistem</p>
+                        <p class="text-sm font-semibold uppercase tracking-[0.28em] text-white/75">Status Operasional</p>
                         <div class="mt-5 space-y-4">
                             <div class="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3">
                                 <span class="text-sm">Akun aktif</span>

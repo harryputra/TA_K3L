@@ -57,7 +57,7 @@ class AuthController extends Controller
             'last_login_at' => now(),
         ])->save();
 
-        return redirect()->intended(route($user->dashboardRouteName()));
+        return redirect()->route($user->dashboardRouteName());
     }
 
     public function register(RegisterRequest $request): RedirectResponse

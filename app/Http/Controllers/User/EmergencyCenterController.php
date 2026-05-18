@@ -43,6 +43,15 @@ class EmergencyCenterController extends Controller
 
         $recentReports = collect();
 
+        if ($request->user() && Schema::hasTable('incident_reports')) {
+            $recentReports = IncidentReport::query()
+                ->with(['category', 'location'])
+                ->where('reported_by', $request->user()->id)
+                ->latest('submitted_at')
+                ->take(5)
+                ->get();
+        }
+
         return view('user.emergency.index', compact('emergencyContacts', 'responseSteps', 'firstAidGuides', 'recentReports'));
     }
 }

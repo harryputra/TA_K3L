@@ -69,7 +69,12 @@ class IncidentReportController extends Controller
                 });
             })
             ->when($selectedStatus !== '', fn ($query) => $query->where('status', $selectedStatus))
-            ->when($selectedQuery === '' && $selectedStatus === '', fn ($query) => $query->whereRaw('1 = 0'))
+            ->when(
+                $selectedQuery === '' && $selectedStatus === '',
+                fn ($query) => $request->user()
+                    ? $query->where('reported_by', $request->user()->id)
+                    : $query->whereRaw('1 = 0'),
+            )
             ->latest()
             ->get();
 
@@ -158,13 +163,23 @@ class IncidentReportController extends Controller
 
     public function store(StoreIncidentReportRequest $request): RedirectResponse
     {
+        $validated = $request->safe()->except('victim_type');
+
+        if ($request->user()) {
+            $phone = $request->user()->phone;
+            $validated['reporter_name'] = ($validated['reporter_name'] ?? null) ?: $request->user()->name;
+            $validated['reporter_email'] = ($validated['reporter_email'] ?? null) ?: $request->user()->email;
+            $validated['reporter_whatsapp'] = ($validated['reporter_whatsapp'] ?? null)
+                ?: ($phone && preg_match('/^[0-9+\-\s()]+$/', $phone) ? $phone : '0');
+        }
+
         $report = $this->createIncidentReport->handle(
-            $request->safe()->except('victim_type'),
+            $validated,
             $request->user()?->id,
         );
 
         return redirect()
-            ->route('user.incidents.status', ['q' => $report->report_number])
+            ->route($request->user() ? 'user.incidents.index' : 'user.incidents.status', $request->user() ? [] : ['q' => $report->report_number])
             ->with('status', "Laporan {$report->report_number} berhasil dikirim. Simpan nomor ini untuk memantau status.");
     }
 }

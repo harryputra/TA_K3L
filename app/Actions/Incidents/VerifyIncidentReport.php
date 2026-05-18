@@ -17,7 +17,7 @@ class VerifyIncidentReport
 
     public function handle(IncidentReport $incidentReport, int $verifierId, ?string $note = null, array $classification = []): IncidentReport
     {
-        return DB::transaction(function () use ($incidentReport, $verifierId, $note) {
+        return DB::transaction(function () use ($incidentReport, $verifierId, $note, $classification) {
             $previousStatus = $incidentReport->status;
 
             $incidentReport->update([

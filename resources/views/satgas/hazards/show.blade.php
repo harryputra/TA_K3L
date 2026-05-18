@@ -122,7 +122,7 @@
                                 </div>
                                 <span id="floorplan-selected-badge" class="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase text-slate-600">Denah</span>
                             </div>
-                            <div id="hazard-floorplan-map" class="h-[420px] w-full bg-slate-100"></div>
+                            @include('partials.floorplan-gedung-teori-lt2', ['id' => 'hazard-floorplan-map'])
                         </div>
                     </div>
 
@@ -292,6 +292,32 @@
                 iconAnchor: [17, 17],
             });
 
+            const floorplanWidth = Number(floorplanElement.dataset.floorplanWidth || 4080);
+            const floorplanHeight = Number(floorplanElement.dataset.floorplanHeight || 3060);
+            const floorplanLayer = floorplanElement.querySelector('.floorplan-marker-layer');
+            const floorplanPin = document.createElement('button');
+
+            floorplanPin.type = 'button';
+            floorplanPin.className = 'pointer-events-auto absolute z-30 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white bg-rose-600 text-lg font-black text-white shadow-[0_12px_26px_rgba(15,23,42,.38)] transition hover:scale-110 focus:outline-none focus:ring-4 focus:ring-rose-200';
+            floorplanPin.textContent = '!';
+            floorplanPin.title = 'Titik hazard pada denah';
+            floorplanLayer.appendChild(floorplanPin);
+
+            const positionFloorplanPin = (x, y) => {
+                floorplanPin.style.left = `${(Number(x) / floorplanWidth) * 100}%`;
+                floorplanPin.style.top = `${(Number(y) / floorplanHeight) * 100}%`;
+            };
+
+            const floorplanPointFromEvent = (event) => {
+                const canvas = floorplanElement.firstElementChild;
+                const rect = canvas.getBoundingClientRect();
+
+                return {
+                    x: Math.max(0, Math.min(floorplanWidth, ((event.clientX - rect.left) / rect.width) * floorplanWidth)),
+                    y: Math.max(0, Math.min(floorplanHeight, ((event.clientY - rect.top) / rect.height) * floorplanHeight)),
+                };
+            };
+
             const setSource = (source) => {
                 mapSourceInput.value = source;
                 satelliteBadge.className = source === 'satellite'
@@ -322,10 +348,10 @@
                     ? 'Klik sekali pada map untuk menaruh titik. Drag marker jika perlu koreksi.'
                     : 'Aktifkan mode titik, lalu klik lokasi hazard.';
                 floorplanModeHelp.textContent = floorplanActive
-                    ? 'Klik sekali pada denah untuk menaruh titik. Drag marker jika perlu koreksi.'
+                    ? 'Klik sekali pada denah untuk menaruh titik.'
                     : 'Aktifkan mode titik, lalu klik area pada denah.';
 
-                [map, floorplanMap].filter(Boolean).forEach((leafletMap) => {
+                [map].filter(Boolean).forEach((leafletMap) => {
                     if (activePicker) {
                         leafletMap.dragging.disable();
                         leafletMap.touchZoom.disable();
@@ -344,6 +370,8 @@
                         leafletMap.getContainer().style.cursor = '';
                     }
                 });
+
+                floorplanElement.classList.toggle('cursor-crosshair', floorplanActive);
             };
 
             const campusCenter = [-6.8761, 107.62063];
@@ -382,38 +410,24 @@
                 setPickingMode('satellite');
             });
 
-            const floorplanWidth = 4080;
-            const floorplanHeight = 3060;
-            const floorplanBounds = [[0, 0], [floorplanHeight, floorplanWidth]];
-            const floorplanMap = L.map(floorplanElement, {
-                crs: L.CRS.Simple,
-                minZoom: -2,
-                maxZoom: 2,
-                zoomSnap: 0.25,
-            });
-            L.imageOverlay('{{ asset('img/campus-denah/20260430_144208.jpg') }}', floorplanBounds).addTo(floorplanMap);
-            floorplanMap.fitBounds(floorplanBounds);
-
-            const savedFloorplanPoint = [
-                Number(floorplanYInput.value || floorplanHeight / 2),
-                Number(floorplanXInput.value || floorplanWidth / 2),
-            ];
-            const floorplanMarker = L.marker(savedFloorplanPoint, { draggable: true, icon: pointIcon }).addTo(floorplanMap);
-
-            const syncFloorplanInputs = (latlng) => {
+            const syncFloorplanInputs = (point) => {
                 setSource('floorplan');
-                floorplanXInput.value = latlng.lng.toFixed(3);
-                floorplanYInput.value = latlng.lat.toFixed(3);
+                floorplanXInput.value = point.x.toFixed(3);
+                floorplanYInput.value = point.y.toFixed(3);
+                positionFloorplanPin(point.x, point.y);
             };
 
-            floorplanMarker.on('dragend', () => syncFloorplanInputs(floorplanMarker.getLatLng()));
-            floorplanMap.on('click', (event) => {
+            positionFloorplanPin(
+                Number(floorplanXInput.value || floorplanWidth / 2),
+                Number(floorplanYInput.value || floorplanHeight / 2),
+            );
+
+            floorplanElement.addEventListener('click', (event) => {
                 if (activePicker !== 'floorplan') {
                     return;
                 }
 
-                floorplanMarker.setLatLng(event.latlng);
-                syncFloorplanInputs(event.latlng);
+                syncFloorplanInputs(floorplanPointFromEvent(event));
                 setPickingMode('floorplan');
             });
 

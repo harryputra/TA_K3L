@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Denah Gedung Teori Lantai 3</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-950">
+  <main class="mx-auto w-full max-w-[1280px] p-6">
+    <header class="mb-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Denah GPS-ready</p>
+          <h1 class="mt-1 text-2xl font-bold text-slate-950">Gedung Teori - Lantai 3</h1>
+          <p id="gps-status" class="mt-2 text-sm font-semibold text-slate-500">GPS belum aktif. Pilih lantai manual atau gunakan deteksi lokasi.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <a href="#" aria-disabled="true" class="inline-flex min-h-11 items-center rounded-full bg-slate-100 px-4 text-sm font-bold text-slate-400">Lantai 1</a>
+          <a href="#" aria-disabled="true" class="inline-flex min-h-11 items-center rounded-full bg-slate-100 px-4 text-sm font-bold text-slate-400">Lantai 2</a>
+          <a href="denah-gedung-teori-lantai-3.html" aria-current="page" class="inline-flex min-h-11 items-center rounded-full bg-sky-700 px-4 text-sm font-bold text-white">Lantai 3</a>
+          <a href="#" aria-disabled="true" class="inline-flex min-h-11 items-center rounded-full bg-slate-100 px-4 text-sm font-bold text-slate-400">Lantai 4</a>
+          <button id="use-gps" type="button" class="inline-flex min-h-11 items-center rounded-full bg-slate-950 px-4 text-sm font-bold text-white">Gunakan GPS</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="max-h-[72vh] min-h-[360px] overflow-auto overscroll-contain border border-slate-300 bg-white sm:min-h-[460px] lg:min-h-[560px]">
+      <div id="floorplan" class="relative m-3 aspect-[4080/3060] min-w-[760px] bg-white sm:m-4 sm:min-w-[980px] lg:min-w-[1184px]">
+        <div id="rooms" class="absolute left-[1.32%] top-[16.27%] h-[43.25%] w-[96.1%]"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const rooms = [
+      ['lab-sensor', 'Lab. Sensor', 10, 0, 175, 102],
+      ['tangga-barat-atas', 'Tangga', 102, 102, 83, 52],
+      ['lab-robotik', 'Lab. Robotik', 185, 0, 160, 154],
+      ['sanggar', 'Sanggar', 345, 0, 60, 80],
+      ['bem', 'BEM', 405, 0, 60, 80],
+      ['tangga-turun', 'Tangga Turun', 465, 56, 73, 98],
+      ['wc-tengah-atas', 'WC', 538, 0, 82, 154],
+      ['ruang-dosen', 'Ruang Dosen', 10, 247, 90, 153],
+      ['wc-barat-bawah', 'WC', 100, 285, 85, 115],
+      ['lab-bawah', 'Lab', 185, 247, 160, 153],
+      ['tangga-darurat', 'Tangga Darurat', 345, 337, 90, 63],
+      ['koridor-apsi', '', 435, 337, 31, 63],
+      ['apsi', 'APSI', 466, 337, 154, 63],
+      ['tangga-lt4', 'Tg. Ke LT4', 490, 252, 49, 98],
+      ['b306', 'B306', 620, 112, 63, 80],
+      ['b305', 'B305', 683, 112, 63, 80],
+      ['b304', 'B304', 746, 112, 63, 80],
+      ['b303', 'B303', 809, 112, 63, 80],
+      ['b302', 'B302', 872, 112, 63, 80],
+      ['b301', 'B301', 935, 112, 64, 80],
+      ['b307', 'B307', 620, 251, 63, 80],
+      ['b308', 'B308', 683, 251, 63, 80],
+      ['b309', 'B309', 746, 251, 63, 80],
+      ['b310', 'B310', 809, 251, 63, 80],
+      ['b311', 'B311', 872, 251, 63, 80],
+      ['b312r', 'B312r', 935, 251, 64, 80],
+      ['kantin-teori', 'Kantin Teori', 999, 0, 185, 110],
+      ['hall-timur', '', 999, 110, 110, 221],
+      ['tangga-timur', 'Tangga', 1109, 110, 75, 61],
+      ['void-timur', '', 1109, 171, 75, 89],
+      ['lift', 'Lift', 1109, 260, 75, 38],
+      ['koridor-timur-bawah', '', 1109, 298, 75, 33],
+    ];
+
+    const layer = document.getElementById('rooms');
+    const gpsStatus = document.getElementById('gps-status');
+    const gpsButton = document.getElementById('use-gps');
+    const campusBuildings = [
+      {
+        key: 'gedung-teori',
+        name: 'Gedung Teori & Kantor',
+        defaultFloor: 3,
+        floors: {
+          3: 'denah-gedung-teori-lantai-3.html',
+        },
+        coordinates: [
+          [-6.87732, 107.62028],
+          [-6.87733, 107.62114],
+          [-6.87753, 107.62114],
+          [-6.87751, 107.62029],
+        ],
+      },
+    ];
+
+    rooms.forEach(([id, name, x, y, w, h]) => {
+      const room = document.createElement('button');
+      room.type = 'button';
+      room.dataset.roomId = id;
+      room.dataset.roomName = name;
+      room.title = name || 'Area denah';
+      room.className = 'group absolute flex items-center justify-center border-2 border-slate-950 bg-slate-200 text-center text-[11px] font-medium leading-tight transition hover:z-20 hover:-translate-y-0.5 hover:bg-sky-100 hover:shadow-[0_10px_24px_rgba(2,132,199,0.28)] focus:z-20 focus:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-200';
+      room.style.left = `${x / 1184 * 100}%`;
+      room.style.top = `${y / 400 * 100}%`;
+      room.style.width = `${w / 1184 * 100}%`;
+      room.style.height = `${h / 400 * 100}%`;
+      room.innerHTML = name ? `<span class="px-1 group-hover:font-bold">${name}</span>` : '';
+      layer.appendChild(room);
+    });
+
+    const isPointInsidePolygon = ([lat, lng], polygon) => {
+      let inside = false;
+
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const [latI, lngI] = polygon[i];
+        const [latJ, lngJ] = polygon[j];
+        const intersects = ((lngI > lng) !== (lngJ > lng))
+          && (lat < ((latJ - latI) * (lng - lngI)) / (lngJ - lngI) + latI);
+
+        if (intersects) inside = !inside;
+      }
+
+      return inside;
+    };
+
+    const buildingAt = (lat, lng) => campusBuildings.find((building) => isPointInsidePolygon([lat, lng], building.coordinates));
+
+    gpsButton.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        gpsStatus.textContent = 'GPS tidak didukung browser ini.';
+        return;
+      }
+
+      gpsStatus.textContent = 'Mendeteksi posisi...';
+      navigator.geolocation.getCurrentPosition((position) => {
+        const detected = buildingAt(position.coords.latitude, position.coords.longitude);
+
+        if (!detected) {
+          gpsStatus.textContent = 'Posisi belum masuk area Gedung Teori.';
+          return;
+        }
+
+        const targetFloor = detected.defaultFloor;
+        const targetUrl = detected.floors[targetFloor];
+        gpsStatus.textContent = `${detected.name} terdeteksi. Menampilkan lantai ${targetFloor}.`;
+
+        if (targetUrl && !location.pathname.endsWith(targetUrl)) {
+          location.href = targetUrl;
+        }
+      }, () => {
+        gpsStatus.textContent = 'Izin GPS ditolak atau posisi gagal dibaca.';
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 15000,
+        timeout: 10000,
+      });
+    });
+  </script>
+</body>
+</html>

@@ -5,6 +5,10 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\EmergencyContactController;
 use App\Http\Controllers\Admin\EmergencyResponseStepController;
 use App\Http\Controllers\Admin\FirstAidGuideController;
+use App\Http\Controllers\Admin\IncidentCategoryController;
+use App\Http\Controllers\Admin\KnowledgeArticleController;
+use App\Http\Controllers\Admin\KnowledgeCategoryController;
+use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\PotentialHazardReportController as AdminPotentialHazardReportController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Satgas\DashboardController as SatgasDashboardController;
@@ -20,6 +24,8 @@ use App\Http\Controllers\User\IncidentReportController;
 use App\Http\Controllers\User\KnowledgeCenterController;
 use App\Http\Controllers\User\KnowledgeModuleController;
 use App\Http\Controllers\User\PotentialHazardReportController;
+use App\Http\Controllers\User\ActivityLogController;
+use App\Http\Controllers\User\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,7 +42,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::prefix('user')->name('user.')->group(function () {
-    Route::get('/dashboard', UserDashboardController::class)->name('dashboard');
+    Route::get('/dashboard', UserDashboardController::class)->middleware('active.user')->name('dashboard');
     Route::get('/emergency-center', EmergencyCenterController::class)->name('emergency.index');
     Route::get('/knowledge-center', KnowledgeCenterController::class)->name('knowledge.index');
     Route::get('/knowledge-center/module/{slug}', KnowledgeModuleController::class)->name('knowledge.show');
@@ -45,8 +51,15 @@ Route::prefix('user')->name('user.')->group(function () {
     Route::get('/hazard-reports/create', PotentialHazardReportController::class)->name('hazards.create');
     Route::post('/hazard-reports', [PotentialHazardReportController::class, 'store'])->name('hazards.store');
     Route::get('/hazard-reports/{potentialHazardReport}', [PotentialHazardReportController::class, 'show'])->middleware(['auth', 'active.user'])->name('hazards.show');
+    Route::get('/profile', ProfileController::class)->middleware(['auth', 'active.user'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->middleware(['auth', 'active.user'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->middleware(['auth', 'active.user'])->name('profile.update');
+    Route::get('/activities', ActivityLogController::class)->middleware(['auth', 'active.user'])->name('activities.index');
+    Route::patch('/activities/{activityLog}/read', [ActivityLogController::class, 'markRead'])->middleware(['auth', 'active.user'])->name('activities.read');
+    Route::patch('/activities/read-all', [ActivityLogController::class, 'markAllRead'])->middleware(['auth', 'active.user'])->name('activities.read-all');
 
     Route::prefix('incidents')->name('incidents.')->group(function () {
+        Route::get('/', [IncidentReportController::class, 'index'])->middleware(['auth', 'active.user'])->name('index');
         Route::get('/status', [IncidentReportController::class, 'status'])->name('status');
         Route::get('/create', [IncidentReportController::class, 'create'])->name('create');
         Route::post('/', [IncidentReportController::class, 'store'])->name('store');
@@ -60,6 +73,10 @@ Route::middleware(['auth', 'active.user', 'role:admin'])->prefix('admin')->name(
     Route::resource('emergency-contacts', EmergencyContactController::class)->except(['show']);
     Route::resource('emergency-response-steps', EmergencyResponseStepController::class)->except(['show']);
     Route::resource('first-aid-guides', FirstAidGuideController::class)->except(['show']);
+    Route::resource('locations', LocationController::class)->except(['show']);
+    Route::resource('incident-categories', IncidentCategoryController::class)->except(['show']);
+    Route::resource('knowledge-categories', KnowledgeCategoryController::class)->except(['show']);
+    Route::resource('knowledge-articles', KnowledgeArticleController::class)->except(['show']);
     Route::get('hazards', [AdminPotentialHazardReportController::class, 'index'])->name('hazards.index');
     Route::get('hazards/{potentialHazardReport}', [AdminPotentialHazardReportController::class, 'show'])->name('hazards.show');
 });

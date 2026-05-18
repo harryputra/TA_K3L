@@ -27,11 +27,6 @@
                 <span class="material-symbols-outlined text-[var(--primary-color)]">book_5</span>
                 <span class="font-bold text-[var(--primary-color)]">Materi K3</span>
             </a>
-            <a href="{{ route('user.hazards.map') }}"
-                class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('user.hazards.map') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
-                <span class="material-symbols-outlined text-[var(--primary-color)]">map</span>
-                <span class="font-bold text-[var(--primary-color)]">Peta</span>
-            </a>
             <a href="{{ route('user.emergency.index') }}"
                 class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('user.emergency.*') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
                 <span class="material-symbols-outlined text-[var(--primary-color)]">emergency_home</span>
@@ -84,10 +79,6 @@
                         <a href="{{ route('user.hazards.create') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)]">
                             <span class="material-symbols-outlined text-[var(--primary-color)]">warning</span>
                             Potensi Bahaya
-                        </a>
-                        <a href="{{ route('user.hazards.map') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)]">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">map</span>
-                            Peta Hazard
                         </a>
                         <a href="{{ route('user.knowledge.index') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)]">
                             <span class="material-symbols-outlined text-[var(--primary-color)]">book_5</span>

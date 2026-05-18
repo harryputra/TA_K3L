@@ -8,6 +8,68 @@
 
 @section('page')
     @php
+        $campusBuildingPolygons = [
+            [
+                'key' => 'gedung-teori',
+                'name' => 'Gedung Teori & Kantor',
+                'color' => '#2563eb',
+                'default_floor' => 2,
+                'floors' => [2, 3],
+                'coordinates' => [
+                    [-6.87732, 107.62028],
+                    [-6.87733, 107.62114],
+                    [-6.87753, 107.62114],
+                    [-6.87751, 107.62029],
+                ],
+            ],
+            [
+                'key' => 'gedung-kantor',
+                'name' => 'Gedung Kantor',
+                'color' => '#dc2626',
+                'coordinates' => [
+                    [-6.87717, 107.61987],
+                    [-6.87717, 107.62008],
+                    [-6.87733, 107.62007],
+                    [-6.87734, 107.62012],
+                    [-6.87752, 107.62011],
+                    [-6.87753, 107.61984],
+                ],
+            ],
+            [
+                'key' => 'gedung-mekanik',
+                'name' => 'Gedung Mekanik',
+                'color' => '#16a34a',
+                'coordinates' => [
+                    [-6.87702, 107.62026],
+                    [-6.87704, 107.62118],
+                    [-6.87728, 107.62117],
+                    [-6.87726, 107.62024],
+                ],
+            ],
+            [
+                'key' => 'gedung-fe',
+                'name' => 'Gedung FE',
+                'color' => '#9333ea',
+                'coordinates' => [
+                    [-6.87639, 107.62084],
+                    [-6.87639, 107.62127],
+                    [-6.87694, 107.62127],
+                    [-6.87694, 107.62084],
+                ],
+            ],
+            [
+                'key' => 'gedung-grc',
+                'name' => 'Gedung GRC',
+                'color' => '#f59e0b',
+                'coordinates' => [
+                    [-6.87675, 107.62039],
+                    [-6.87676, 107.62078],
+                    [-6.87693, 107.62077],
+                    [-6.87693, 107.62038],
+                ],
+            ],
+        ];
+
         $riskBadge = fn (?string $risk): string => match ($risk) {
             'rendah' => 'bg-emerald-100 text-emerald-800',
             'sedang' => 'bg-amber-100 text-amber-800',
@@ -85,11 +147,17 @@
                 <div class="flex flex-col gap-2 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Denah Kampus</p>
-                        <h2 class="mt-1 text-2xl font-bold text-slate-900">Titik rawan pada foto denah</h2>
+                        <h2 class="mt-1 text-2xl font-bold text-slate-900">Titik rawan pada denah gedung</h2>
                     </div>
-                    <span class="text-sm font-semibold text-slate-500">{{ $floorplanMarkers->count() }} titik</span>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span id="public-gps-building-status" class="text-sm font-semibold text-slate-500">{{ $floorplanMarkers->count() }} titik</span>
+                        <button id="public-use-gps-button" type="button" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[var(--primary-color)] px-4 text-sm font-bold text-white transition hover:bg-[var(--primary-deep)]">
+                            <span class="material-symbols-outlined text-[20px]">my_location</span>
+                            Gunakan GPS
+                        </button>
+                    </div>
                 </div>
-                <div id="public-floorplan-map" class="h-[72vh] min-h-[560px] w-full bg-slate-100"></div>
+                @include('partials.floorplan-building-viewer', ['id' => 'public-floorplan-viewer'])
             </section>
         </section>
     </main>
@@ -100,9 +168,12 @@
     <script>
         (() => {
             const mapElement = document.getElementById('public-hazard-map');
-            const floorplanElement = document.getElementById('public-floorplan-map');
+            const floorplanViewer = document.getElementById('public-floorplan-viewer');
+            const gpsButton = document.getElementById('public-use-gps-button');
+            const gpsStatus = document.getElementById('public-gps-building-status');
             const markers = @json($hazardMarkers);
             const floorplanMarkers = @json($floorplanMarkers);
+            const campusBuildings = @json($campusBuildingPolygons);
 
             if (typeof L === 'undefined') {
                 return;
@@ -125,6 +196,49 @@
                 });
             };
 
+            const addCampusBuildings = (map, bounds) => {
+                campusBuildings.forEach((building) => {
+                    const polygon = L.polygon(building.coordinates, {
+                        color: building.color,
+                        fillColor: building.color,
+                        fillOpacity: 0.28,
+                        opacity: 0.95,
+                        weight: 3,
+                    }).addTo(map);
+
+                    polygon.bindPopup(`<strong>${building.name}</strong><br>Area gedung kampus`);
+                    building.coordinates.forEach((coordinate) => bounds.push(coordinate));
+                });
+            };
+
+            const addBuildingLegend = (map) => {
+                const legend = L.control({ position: 'bottomleft' });
+
+                legend.onAdd = () => {
+                    const container = L.DomUtil.create('div', 'campus-building-legend');
+                    container.style.background = 'rgba(255,255,255,.94)';
+                    container.style.borderRadius = '16px';
+                    container.style.boxShadow = '0 14px 34px rgba(15,23,42,.22)';
+                    container.style.padding = '12px 14px';
+                    container.style.fontFamily = 'Poppins, sans-serif';
+                    container.style.fontSize = '12px';
+                    container.style.lineHeight = '1.4';
+                    container.innerHTML = `
+                        <strong style="display:block;margin-bottom:8px;color:#0f172a;">Polygon Gedung</strong>
+                        ${campusBuildings.map((building) => `
+                            <span style="display:flex;align-items:center;gap:8px;margin-top:6px;color:#334155;">
+                                <span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${building.color};opacity:.85;"></span>
+                                ${building.name}
+                            </span>
+                        `).join('')}
+                    `;
+                    L.DomEvent.disableClickPropagation(container);
+                    return container;
+                };
+
+                legend.addTo(map);
+            };
+
             if (mapElement) {
                 const campusCenter = [-6.8761, 107.62063];
                 const map = L.map(mapElement, { zoomControl: true }).setView(campusCenter, 18);
@@ -140,6 +254,9 @@
                 }).addTo(map);
 
                 const bounds = [];
+
+                addCampusBuildings(map, bounds);
+                addBuildingLegend(map);
 
                 markers.forEach((marker) => {
                     L.marker([marker.latitude, marker.longitude], { icon: createIcon(marker.risk_level) })
@@ -159,31 +276,116 @@
                 }
             }
 
-            if (floorplanElement) {
-                const width = 4080;
-                const height = 3060;
-                const bounds = [[0, 0], [height, width]];
-                const floorplanMap = L.map(floorplanElement, {
-                    crs: L.CRS.Simple,
-                    minZoom: -2,
-                    maxZoom: 2,
-                    zoomSnap: 0.25,
+            const selectFloor = (viewer, floor) => {
+                if (!viewer) {
+                    return;
+                }
+
+                viewer.dataset.activeFloor = String(floor);
+                viewer.querySelectorAll('[data-floor-tab]').forEach((tab) => {
+                    const active = tab.dataset.targetFloor === String(floor);
+                    tab.setAttribute('aria-selected', active ? 'true' : 'false');
+                    tab.className = active
+                        ? 'inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--primary-color)] px-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(10,77,179,0.24)] transition'
+                        : 'inline-flex min-h-11 items-center justify-center rounded-full bg-slate-100 px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-200';
                 });
 
-                L.imageOverlay('{{ asset('img/campus-denah/20260430_144208.jpg') }}', bounds).addTo(floorplanMap);
-                floorplanMap.fitBounds(bounds);
-
-                floorplanMarkers.forEach((marker) => {
-                    L.marker([marker.y, marker.x], { icon: createIcon(marker.risk_level, 24) })
-                        .addTo(floorplanMap)
-                        .bindPopup(`
-                            <strong>${marker.title}</strong><br>
-                            ${marker.location}<br>
-                            Risiko: ${marker.risk_level}<br>
-                            Status: ${marker.status}
-                        `);
+                viewer.querySelectorAll('[data-floor-panel]').forEach((panel) => {
+                    panel.classList.toggle('hidden', panel.dataset.panelFloor !== String(floor));
                 });
-            }
+            };
+
+            const renderFloorplanMarkers = (viewer, markerData) => {
+                const floorplans = viewer?.querySelectorAll('.floorplan-html') ?? [];
+
+                floorplans.forEach((floorplan) => {
+                const layer = floorplan?.querySelector('.floorplan-marker-layer');
+                const width = Number(floorplan?.dataset.floorplanWidth || 4080);
+                const height = Number(floorplan?.dataset.floorplanHeight || 3060);
+                    const buildingKey = floorplan?.dataset.buildingKey || 'gedung-teori';
+                    const floor = Number(floorplan?.dataset.floor || 2);
+
+                if (!layer) {
+                    return;
+                }
+
+                layer.innerHTML = '';
+
+                    markerData
+                        .filter((marker) => (marker.building_key || 'gedung-teori') === buildingKey && Number(marker.floor || 2) === floor)
+                        .forEach((marker) => {
+                    const color = colors[marker.risk_level] || '#0a4db3';
+                    const pin = document.createElement('button');
+                    pin.type = 'button';
+                    pin.className = 'pointer-events-auto absolute z-30 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_10px_24px_rgba(15,23,42,.35)] transition hover:scale-125 focus:scale-125 focus:outline-none focus:ring-4 focus:ring-sky-200';
+                    pin.style.left = `${(Number(marker.x) / width) * 100}%`;
+                    pin.style.top = `${(Number(marker.y) / height) * 100}%`;
+                    pin.style.background = color;
+                    pin.title = `${marker.title} - Risiko: ${marker.risk_level}`;
+                    pin.setAttribute('aria-label', pin.title);
+                    pin.addEventListener('click', () => {
+                        alert(`${marker.title}\n${marker.location}\nRisiko: ${marker.risk_level}\nStatus: ${marker.status}`);
+                    });
+                    layer.appendChild(pin);
+                });
+                });
+            };
+
+            const isPointInsidePolygon = ([lat, lng], polygon) => {
+                let inside = false;
+
+                for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                    const [latI, lngI] = polygon[i];
+                    const [latJ, lngJ] = polygon[j];
+                    const intersects = ((lngI > lng) !== (lngJ > lng))
+                        && (lat < ((latJ - latI) * (lng - lngI)) / (lngJ - lngI) + latI);
+
+                    if (intersects) {
+                        inside = !inside;
+                    }
+                }
+
+                return inside;
+            };
+
+            const buildingAt = (lat, lng) => campusBuildings.find((building) => isPointInsidePolygon([lat, lng], building.coordinates));
+
+            const useGpsForFloorplan = () => {
+                if (!navigator.geolocation) {
+                    gpsStatus.textContent = 'GPS tidak didukung browser.';
+                    return;
+                }
+
+                gpsStatus.textContent = 'Mendeteksi posisi...';
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const detected = buildingAt(position.coords.latitude, position.coords.longitude);
+
+                    if (!detected) {
+                        gpsStatus.textContent = 'Posisi belum masuk polygon gedung.';
+                        return;
+                    }
+
+                    const floor = detected.default_floor || detected.floors?.[0] || 2;
+                    gpsStatus.textContent = `${detected.name} terdeteksi`;
+
+                    if (detected.key === floorplanViewer?.dataset.buildingKey) {
+                        floorplanViewer.querySelector('[data-floorplan-building-label]').textContent = detected.name;
+                        selectFloor(floorplanViewer, floor);
+                    }
+                }, () => {
+                    gpsStatus.textContent = 'Izin GPS ditolak atau gagal dibaca.';
+                }, {
+                    enableHighAccuracy: true,
+                    maximumAge: 15000,
+                    timeout: 10000,
+                });
+            };
+
+            floorplanViewer?.querySelectorAll('[data-floor-tab]').forEach((tab) => {
+                tab.addEventListener('click', () => selectFloor(floorplanViewer, tab.dataset.targetFloor));
+            });
+            gpsButton?.addEventListener('click', useGpsForFloorplan);
+            renderFloorplanMarkers(floorplanViewer, floorplanMarkers);
         })();
     </script>
 @endpush

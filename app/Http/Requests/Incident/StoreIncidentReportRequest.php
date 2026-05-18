@@ -19,9 +19,9 @@ class StoreIncidentReportRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:200'],
-            'reporter_name' => ['required', 'string', 'max:150'],
-            'reporter_email' => ['required', 'email:rfc', 'max:150'],
-            'reporter_whatsapp' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
+            'reporter_name' => ['nullable', 'string', 'max:150'],
+            'reporter_email' => ['nullable', 'email:rfc', 'max:150'],
+            'reporter_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
             'incident_category_id' => ['nullable', 'integer', 'exists:incident_categories,id'],
             'location_id' => ['required', 'integer', 'exists:locations,id'],
             'incident_date' => ['required', 'date', 'before_or_equal:today'],
@@ -51,10 +51,15 @@ class StoreIncidentReportRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($this->user()) {
+            $phone = $this->user()->phone;
+            $whatsapp = $this->input('reporter_whatsapp') ?: (
+                $phone && preg_match('/^[0-9+\-\s()]+$/', $phone) ? $phone : '0'
+            );
+
             $this->merge([
                 'reporter_name' => $this->input('reporter_name') ?: $this->user()->name,
                 'reporter_email' => $this->input('reporter_email') ?: $this->user()->email,
-                'reporter_whatsapp' => $this->input('reporter_whatsapp') ?: ($this->user()->phone ?? '-'),
+                'reporter_whatsapp' => $whatsapp,
             ]);
         }
 
