@@ -6,6 +6,7 @@ use App\Models\BodyPart;
 use App\Models\IncidentCategory;
 use App\Models\InjuryCategory;
 use App\Models\Location;
+use App\Support\Hazards\PublicHazardMapData;
 use Illuminate\Support\Facades\Schema;
 
 class ReportFormOptions
@@ -17,6 +18,7 @@ class ReportFormOptions
             'locations' => $this->locations(),
             'injuryCategories' => InjuryCategory::query()->orderBy('name')->get(),
             'bodyParts' => BodyPart::query()->orderBy('name')->get(),
+            'campusBuildingPolygons' => app(PublicHazardMapData::class)->campusBuildingPolygons(),
             'severityOptions' => [
                 'low' => 'Rendah',
                 'medium' => 'Sedang',
@@ -86,6 +88,8 @@ class ReportFormOptions
             'locations' => $this->locations(),
             'hazardTypes' => $hazardTypes,
             'selectedHazardType' => old('hazard_type', $hazardTypes[0]['key']),
+            'campusBuildingPolygons' => app(PublicHazardMapData::class)->campusBuildingPolygons(),
+            'campusBoundaryPolygon' => app(PublicHazardMapData::class)->campusBoundaryPolygon(),
         ];
     }
 

@@ -17,11 +17,7 @@
                 <div class="mt-8 flex flex-col gap-3 sm:flex-row">
                     <a href="{{ route('user.incidents.create') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-4 text-sm font-bold text-[var(--primary-color)] shadow-[0_18px_35px_rgba(15,23,42,0.2)] transition hover:-translate-y-1">
                         <span class="material-symbols-outlined">contract_edit</span>
-                        Lapor Insiden
-                    </a>
-                    <a href="{{ route('user.hazards.create') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--yellow)] px-6 py-4 text-sm font-bold text-white shadow-[0_18px_35px_rgba(231,170,20,0.22)] transition hover:-translate-y-1">
-                        <span class="material-symbols-outlined">warning</span>
-                        Laporkan Potensi Bahaya
+                        Laporan
                     </a>
                     <a href="{{ route('user.incidents.status') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-4 text-sm font-bold text-white transition hover:bg-white/20">
                         <span class="material-symbols-outlined">timeline</span>
@@ -88,16 +84,17 @@
             </section>
         @endisset
 
-        <section class="mx-auto grid w-full max-w-[1360px] gap-5 px-4 py-12 sm:px-6 lg:grid-cols-4 lg:px-10">
+        <section class="mx-auto grid w-full max-w-[1360px] gap-5 px-4 py-12 sm:px-6 lg:grid-cols-3 lg:px-10">
             @foreach ([
-                ['route' => route('user.emergency.index'), 'icon' => 'emergency_home', 'title' => 'Pusat Darurat', 'color' => 'bg-[var(--red)]'],
-                ['route' => route('user.incidents.create'), 'icon' => 'contract_edit', 'title' => 'Form Insiden', 'color' => 'bg-[var(--primary-color)]'],
-                ['route' => route('user.hazards.create'), 'icon' => 'warning', 'title' => 'Potensi Bahaya', 'color' => 'bg-[var(--yellow)]'],
-                ['route' => route('user.knowledge.index'), 'icon' => 'book_5', 'title' => 'Materi K3', 'color' => 'bg-[var(--green)]'],
+                ['route' => route('user.emergency.index'), 'icon' => 'emergency_home', 'title' => 'Pusat Darurat', 'color' => 'bg-white'],
+                ['route' => route('user.incidents.create'), 'icon' => 'contract_edit', 'title' => 'Form Laporan', 'color' => 'bg-white'],
+                ['route' => route('user.knowledge.index'), 'icon' => 'book_5', 'title' => 'Materi K3', 'color' => 'bg-white'],
             ] as $action)
-                <a href="{{ $action['route'] }}" class="{{ $action['color'] }} flex min-h-32 items-center gap-4 rounded-[1.4rem] p-5 text-white shadow-[0_16px_36px_rgba(15,23,42,0.12)] transition hover:-translate-y-1">
-                    <span class="material-symbols-outlined text-4xl">{{ $action['icon'] }}</span>
-                    <span class="text-xl font-bold">{{ $action['title'] }}</span>
+                <a href="{{ $action['route'] }}"
+                    class="{{ $action['color'] }} flex min-h-32 items-center gap-4 rounded-[1.4rem] border-2 p-5 shadow-[0_16px_36px_rgba(15,23,42,0.12)] transition hover:-translate-y-1"
+                    style="border-color: var(--primary-color);">
+                    <span class="material-symbols-outlined text-4xl" style="color: var(--primary-color);">{{ $action['icon'] }}</span>
+                    <span class="text-xl font-bold" style="color: var(--primary-color);">{{ $action['title'] }}</span>
                 </a>
             @endforeach
         </section>

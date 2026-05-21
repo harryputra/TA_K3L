@@ -20,12 +20,13 @@
     <main class="w-full bg-[#f6f8fc] pb-14">
         @include('reports.partials.incident-form', [
             'showInlineFlash' => true,
+            'isPublicIncidentForm' => true,
             'formAction' => route('user.incidents.store'),
             'submitLabel' => 'Kirim Laporan Insiden',
             'cancelUrl' => route('user.dashboard'),
             'panelEyebrow' => 'Form Pelaporan',
-            'panelTitle' => 'Susun laporan insiden dengan struktur yang lebih jelas',
-            'panelDescription' => 'Lengkapi identitas kejadian, uraian kronologi, dan bukti pendukung agar Satgas dapat melakukan verifikasi serta tindak lanjut dengan lebih cepat.',
+            'panelTitle' => 'Laporkan insiden dengan cepat',
+            'panelDescription' => 'Isi data kejadian, lokasi GPS, korban, dampak awal, kronologi, dan bukti pendukung. Satgas akan melengkapi verifikasi dan tindak lanjut.',
             'summaryTips' => [
                 ['label' => 'Pelapor', 'value' => 'Isi kontak aktif agar pembaruan status dapat dikirim.'],
                 ['label' => 'Lampiran', 'value' => 'Maksimal 3 file untuk memudahkan verifikasi awal.'],
@@ -33,9 +34,10 @@
             ],
             'sidebarEyebrow' => 'Panduan Singkat',
             'sidebarTitle' => 'Agar laporan lebih cepat diproses',
-            'sidebarDescription' => 'Semakin jelas detail yang Anda isi, semakin cepat tim dapat memahami tingkat risiko dan menentukan tindak lanjut.',
+            'sidebarDescription' => 'Lengkapi informasi yang pelapor ketahui di lapangan. Bagian verifikasi, keputusan status, PIC, dan tindak lanjut tetap dilengkapi Satgas.',
             'sidebarSteps' => [
-                ['title' => 'Tulis lokasi yang spesifik', 'description' => 'Sebutkan gedung, ruang, atau titik kejadian sedetail mungkin.'],
+                ['title' => 'Izinkan akses GPS', 'description' => 'Lokasi utama akan otomatis mengikuti area gedung yang terdeteksi.'],
+                ['title' => 'Isi dampak dan korban', 'description' => 'Tambahkan data korban, luka, APD, dan dampak awal bila informasinya tersedia.'],
                 ['title' => 'Jelaskan urutan kejadian', 'description' => 'Tuliskan kronologi singkat tapi runtut, mulai dari awal sampai kondisi terakhir.'],
                 ['title' => 'Lampirkan bukti yang relevan', 'description' => 'Foto alat, area, atau kondisi terkini akan sangat membantu proses review.'],
             ],

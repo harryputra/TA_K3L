@@ -31,6 +31,8 @@ class WhatsAppReportNotifier
             'Pelapor: ' . ($report->reporter?->name ?? $report->reporter_name ?? '-'),
             'Kontak: ' . ($report->reporter_whatsapp ?? '-'),
             'Lokasi: ' . ($report->location?->name ?? '-'),
+            'Detail lokasi: ' . ($report->specific_location ?? '-'),
+            'Koordinat: ' . ($report->latitude && $report->longitude ? "{$report->latitude}, {$report->longitude}" : '-'),
             'Tanggal kejadian: ' . ($report->incident_date?->format('d M Y') ?? '-'),
             'Buka detail: ' . route('satgas.incidents.show', $report),
         ]);

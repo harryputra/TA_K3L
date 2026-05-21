@@ -21,7 +21,7 @@ class SatgasIncidentReviewFeatureTest extends TestCase
     {
         $satgas = $this->createSatgasUser();
         $reporter = $this->createMahasiswaUser();
-        $category = IncidentCategory::query()->create(['name' => 'Unsafe Condition']);
+        $category = IncidentCategory::query()->firstOrCreate(['name' => 'Other Incident']);
         $location = Location::query()->create([
             'name' => 'Workshop Teknik',
             'code' => 'WORKSHOP',
@@ -58,9 +58,9 @@ class SatgasIncidentReviewFeatureTest extends TestCase
     {
         $satgas = $this->createSatgasUser();
         $reporter = $this->createMahasiswaUser();
-        $category = IncidentCategory::query()->create(['name' => 'Near Miss']);
-        $injuryCategory = InjuryCategory::query()->create(['name' => 'Luka Memar']);
-        $bodyPart = BodyPart::query()->create(['name' => 'Kaki']);
+        $category = IncidentCategory::query()->firstOrCreate(['name' => 'Near Miss']);
+        $injuryCategory = InjuryCategory::query()->firstOrCreate(['name' => 'Memar / Kontusio']);
+        $bodyPart = BodyPart::query()->firstOrCreate(['name' => 'Lutut Kiri']);
         $location = Location::query()->create([
             'name' => 'Laboratorium Kimia',
             'code' => 'LAB-KIM',
@@ -113,7 +113,7 @@ class SatgasIncidentReviewFeatureTest extends TestCase
             ->assertSeeText('Lampiran')
             ->assertSeeText('Rachmat Hidayat')
             ->assertSeeText('Abdul Muhyi')
-            ->assertSeeText('Luka Memar')
+            ->assertSeeText('Memar / Kontusio')
             ->assertSeeText('Area kerja yang berbahaya')
             ->assertSeeText('Beri pengamanan pada sumber bahaya')
             ->assertSeeText('Pasang pembatas dan jadwalkan inspeksi rutin.');
@@ -123,7 +123,7 @@ class SatgasIncidentReviewFeatureTest extends TestCase
     {
         $satgas = $this->createSatgasUser();
         $reporter = $this->createMahasiswaUser();
-        $category = IncidentCategory::query()->create(['name' => 'Unsafe Action']);
+        $category = IncidentCategory::query()->firstOrCreate(['name' => 'Other Incident']);
         $location = Location::query()->create([
             'name' => 'Gedung Perkuliahan A',
             'code' => 'GPA',
@@ -150,6 +150,55 @@ class SatgasIncidentReviewFeatureTest extends TestCase
             ->assertOk()
             ->assertSeeText('tidak memerlukan verifikasi ulang', false)
             ->assertDontSeeText('Catatan verifikasi');
+    }
+
+    public function test_satgas_incident_gis_page_displays_mapped_incidents_and_exports_excel(): void
+    {
+        $satgas = $this->createSatgasUser();
+        $reporter = $this->createMahasiswaUser();
+        $category = IncidentCategory::query()->firstOrCreate(['name' => 'Electrical Incident']);
+        $location = Location::query()->firstOrCreate([
+            'code' => 'GIS-GEDUNG-FE',
+        ], [
+            'name' => 'Gedung FE',
+            'is_active' => true,
+        ]);
+
+        IncidentReport::query()->create([
+            'report_number' => 'INC-GIS-001',
+            'reported_by' => $reporter->id,
+            'incident_category_id' => $category->id,
+            'location_id' => $location->id,
+            'latitude' => '-6.8765000',
+            'longitude' => '107.6210000',
+            'incident_date' => '2026-05-20',
+            'incident_time' => '09:00:00',
+            'severity_level' => 'high',
+            'title' => 'Sengatan listrik ringan',
+            'chronology' => 'Panel listrik menimbulkan sengatan ringan saat pemeriksaan awal.',
+            'status' => 'verified',
+            'submitted_at' => now(),
+        ]);
+
+        $this->actingAs($satgas)
+            ->get(route('satgas.incidents.gis', [
+                'year' => '2026',
+                'month' => '5',
+                'scope' => 'inside',
+            ]))
+            ->assertOk()
+            ->assertSeeText('Peta satelit kejadian kecelakaan')
+            ->assertSeeText('Sengatan listrik ringan')
+            ->assertSeeText('Gedung FE')
+            ->assertSeeText('Export Excel');
+
+        $this->actingAs($satgas)
+            ->get(route('satgas.incidents.gis.export', [
+                'year' => '2026',
+                'month' => '5',
+            ]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
     protected function createSatgasUser(): User

@@ -25,6 +25,8 @@ class PotentialHazardReportFeatureTest extends TestCase
             ->assertSeeText('Form Pelaporan K3L')
             ->assertSeeText('Form Insiden')
             ->assertSeeText('Form Hazard')
+            ->assertSeeText('Koordinat GPS hazard')
+            ->assertSeeText('Detail lokasi hazard')
             ->assertSee('data-report-panel="incident"', false)
             ->assertSee('data-report-panel="hazard"', false);
     }
@@ -45,6 +47,9 @@ class PotentialHazardReportFeatureTest extends TestCase
             'hazard_type' => 'listrik',
             'location_id' => $location->id,
             'specific_location' => 'Sisi utara panel utama',
+            'latitude' => -6.8771580,
+            'longitude' => 107.6201793,
+            'location_accuracy' => 12.5,
             'notes' => 'Perlu isolasi area sebelum praktikum berikutnya.',
             'attachments' => [
                 UploadedFile::fake()->image('hazard-photo.jpg'),
@@ -60,6 +65,8 @@ class PotentialHazardReportFeatureTest extends TestCase
             'location_id' => $location->id,
             'hazard_type' => 'listrik',
             'title' => 'Kabel panel terkelupas',
+            'latitude' => -6.8771580,
+            'longitude' => 107.6201793,
             'status' => 'submitted',
         ]);
 
@@ -68,6 +75,26 @@ class PotentialHazardReportFeatureTest extends TestCase
         $this->assertNotNull($report);
         $this->assertCount(1, $report->attachments);
         Storage::disk('public')->assertExists($report->attachments->first()->file_path);
+    }
+
+    public function test_user_cannot_submit_hazard_report_with_gps_outside_polman(): void
+    {
+        $user = $this->createMahasiswaUser();
+        $location = Location::query()->create([
+            'name' => 'Workshop Teknik',
+            'code' => 'WORKSHOP',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)->post(route('user.hazards.store'), [
+            'title' => 'Kabel panel terkelupas',
+            'hazard_type' => 'listrik',
+            'location_id' => $location->id,
+            'specific_location' => 'Sisi utara panel utama',
+            'latitude' => -6.9000000,
+            'longitude' => 107.6500000,
+            'notes' => 'Perlu isolasi area sebelum praktikum berikutnya.',
+        ])->assertSessionHasErrors('latitude');
     }
 
     protected function createMahasiswaUser(): User

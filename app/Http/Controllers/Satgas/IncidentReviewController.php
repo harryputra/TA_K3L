@@ -5,16 +5,22 @@ namespace App\Http\Controllers\Satgas;
 use App\Actions\Incidents\VerifyIncidentReport;
 use App\Actions\Incidents\CreateIncidentFollowUp;
 use App\Actions\Incidents\UpdateIncidentReportStatus;
+use App\Exports\IncidentGisSpreadsheetExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Incident\StoreIncidentFollowUpRequest;
 use App\Http\Requests\Incident\UpdateIncidentStatusRequest;
 use App\Http\Requests\Incident\VerifyIncidentReportRequest;
 use App\Models\BodyPart;
+use App\Models\IncidentCategory;
 use App\Models\IncidentReport;
 use App\Models\InjuryCategory;
+use App\Models\Location;
 use App\Models\User;
+use App\Support\Hazards\PublicHazardMapData;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\View\View;
 
 class IncidentReviewController extends Controller
@@ -59,6 +65,73 @@ class IncidentReviewController extends Controller
         return view('satgas.incidents.index', compact('reports', 'summaryCounts', 'selectedQuery', 'selectedStatus'));
     }
 
+    public function gis(Request $request): View
+    {
+        $filters = $this->gisFilters($request);
+        $baseQuery = $this->incidentGisQuery($filters);
+
+        $reports = (clone $baseQuery)
+            ->latest('incident_date')
+            ->paginate(15)
+            ->withQueryString();
+
+        $mapReports = (clone $baseQuery)
+            ->latest('incident_date')
+            ->limit(500)
+            ->get();
+
+        $markers = $mapReports
+            ->map(fn (IncidentReport $report) => $this->incidentMarker($report))
+            ->filter()
+            ->values();
+
+        $summary = [
+            'total' => (clone $baseQuery)->count(),
+            'inside' => (clone $baseQuery)->where(function (Builder $query) {
+                $query
+                    ->whereHas('verifiedLocation', fn (Builder $location) => $location->where('name', '!=', 'Diluar Polman'))
+                    ->orWhere(function (Builder $subQuery) {
+                        $subQuery
+                            ->whereNull('verified_location_id')
+                            ->whereHas('location', fn (Builder $location) => $location->where('name', '!=', 'Diluar Polman'));
+                    });
+            })->count(),
+            'outside' => (clone $baseQuery)->where(function (Builder $query) {
+                $query
+                    ->whereHas('verifiedLocation', fn (Builder $location) => $location->where('name', 'Diluar Polman'))
+                    ->orWhere(function (Builder $subQuery) {
+                        $subQuery
+                            ->whereNull('verified_location_id')
+                            ->whereHas('location', fn (Builder $location) => $location->where('name', 'Diluar Polman'));
+                    });
+            })->count(),
+        ];
+
+        $locations = Location::query()->where('is_active', true)->orderBy('name')->get();
+        $categories = IncidentCategory::query()->orderBy('name')->get();
+        $campusBuildingPolygons = app(PublicHazardMapData::class)->campusBuildingPolygons();
+
+        return view('satgas.incidents.gis', compact(
+            'reports',
+            'markers',
+            'summary',
+            'filters',
+            'locations',
+            'categories',
+            'campusBuildingPolygons',
+        ));
+    }
+
+    public function exportGis(Request $request, IncidentGisSpreadsheetExport $export): StreamedResponse
+    {
+        $filters = $this->gisFilters($request);
+        $reports = $this->incidentGisQuery($filters)
+            ->latest('incident_date')
+            ->get();
+
+        return $export->download($reports, $filters);
+    }
+
     public function show(IncidentReport $incidentReport): View
     {
         $this->authorize('view', $incidentReport);
@@ -67,7 +140,11 @@ class IncidentReviewController extends Controller
             'category',
             'injuryCategory',
             'bodyPart',
+            'injuries.injuryCategory',
+            'injuries.bodyPart',
             'location',
+            'verifiedLocation',
+            'locationVerifier',
             'reporter',
             'victim',
             'attachments',
@@ -78,6 +155,11 @@ class IncidentReviewController extends Controller
 
         $injuryCategories = InjuryCategory::query()->orderBy('name')->get();
         $bodyParts = BodyPart::query()->orderBy('name')->get();
+        $locations = Location::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        $campusBuildingPolygons = app(PublicHazardMapData::class)->campusBuildingPolygons();
 
         $statusOptions = match ($incidentReport->status) {
             'submitted' => ['rejected' => 'Rejected'],
@@ -107,6 +189,8 @@ class IncidentReviewController extends Controller
             'assignableUsers',
             'injuryCategories',
             'bodyParts',
+            'locations',
+            'campusBuildingPolygons',
         ));
     }
 
@@ -116,7 +200,16 @@ class IncidentReviewController extends Controller
             $incidentReport,
             $request->user()->id,
             $request->string('verification_note')->toString() ?: null,
-            $request->safe()->only(['injury_category_id', 'body_part_id', 'impact']),
+            $request->safe()->only([
+                'injury_category_id',
+                'body_part_id',
+                'impact',
+                'verified_location_id',
+                'verified_specific_location',
+                'verified_latitude',
+                'verified_longitude',
+                'verified_location_accuracy',
+            ]),
         );
 
         return redirect()
@@ -149,5 +242,121 @@ class IncidentReviewController extends Controller
         return redirect()
             ->route('satgas.incidents.show', $incidentReport)
             ->with('status', "Tindak lanjut untuk laporan {$incidentReport->report_number} berhasil ditambahkan.");
+    }
+
+    protected function gisFilters(Request $request): array
+    {
+        return [
+            'q' => trim((string) $request->string('q')),
+            'status' => trim((string) $request->string('status')),
+            'category_id' => trim((string) $request->string('category_id')),
+            'location_id' => trim((string) $request->string('location_id')),
+            'severity_level' => trim((string) $request->string('severity_level')),
+            'scope' => trim((string) $request->string('scope')),
+            'date_from' => trim((string) $request->string('date_from')),
+            'date_to' => trim((string) $request->string('date_to')),
+            'month' => trim((string) $request->string('month')),
+            'year' => trim((string) $request->string('year')),
+        ];
+    }
+
+    protected function incidentGisQuery(array $filters): Builder
+    {
+        return IncidentReport::query()
+            ->with([
+                'category',
+                'location',
+                'verifiedLocation',
+                'reporter',
+                'injuries.injuryCategory',
+                'injuries.bodyPart',
+            ])
+            ->where(function (Builder $query) {
+                $query
+                    ->where(function (Builder $subQuery) {
+                        $subQuery->whereNotNull('verified_latitude')->whereNotNull('verified_longitude');
+                    })
+                    ->orWhere(function (Builder $subQuery) {
+                        $subQuery->whereNotNull('latitude')->whereNotNull('longitude');
+                    });
+            })
+            ->when($filters['q'] !== '', function (Builder $query) use ($filters) {
+                $query->where(function (Builder $subQuery) use ($filters) {
+                    $subQuery
+                        ->where('report_number', 'like', '%' . $filters['q'] . '%')
+                        ->orWhere('title', 'like', '%' . $filters['q'] . '%')
+                        ->orWhere('reporter_name', 'like', '%' . $filters['q'] . '%')
+                        ->orWhere('victim_name', 'like', '%' . $filters['q'] . '%')
+                        ->orWhereHas('reporter', fn (Builder $reporter) => $reporter->where('name', 'like', '%' . $filters['q'] . '%'));
+                });
+            })
+            ->when($filters['status'] !== '', fn (Builder $query) => $query->where('status', $filters['status']))
+            ->when($filters['category_id'] !== '', fn (Builder $query) => $query->where('incident_category_id', $filters['category_id']))
+            ->when($filters['location_id'] !== '', function (Builder $query) use ($filters) {
+                $query->where(function (Builder $subQuery) use ($filters) {
+                    $subQuery
+                        ->where('verified_location_id', $filters['location_id'])
+                        ->orWhere(function (Builder $fallback) use ($filters) {
+                            $fallback->whereNull('verified_location_id')->where('location_id', $filters['location_id']);
+                        });
+                });
+            })
+            ->when($filters['severity_level'] !== '', fn (Builder $query) => $query->where('severity_level', $filters['severity_level']))
+            ->when($filters['scope'] === 'inside', function (Builder $query) {
+                $query->where(function (Builder $subQuery) {
+                    $subQuery
+                        ->whereHas('verifiedLocation', fn (Builder $location) => $location->where('name', '!=', 'Diluar Polman'))
+                        ->orWhere(function (Builder $fallback) {
+                            $fallback
+                                ->whereNull('verified_location_id')
+                                ->whereHas('location', fn (Builder $location) => $location->where('name', '!=', 'Diluar Polman'));
+                        });
+                });
+            })
+            ->when($filters['scope'] === 'outside', function (Builder $query) {
+                $query->where(function (Builder $subQuery) {
+                    $subQuery
+                        ->whereHas('verifiedLocation', fn (Builder $location) => $location->where('name', 'Diluar Polman'))
+                        ->orWhere(function (Builder $fallback) {
+                            $fallback
+                                ->whereNull('verified_location_id')
+                                ->whereHas('location', fn (Builder $location) => $location->where('name', 'Diluar Polman'));
+                        });
+                });
+            })
+            ->when($filters['date_from'] !== '', fn (Builder $query) => $query->whereDate('incident_date', '>=', $filters['date_from']))
+            ->when($filters['date_to'] !== '', fn (Builder $query) => $query->whereDate('incident_date', '<=', $filters['date_to']))
+            ->when($filters['month'] !== '', fn (Builder $query) => $query->whereMonth('incident_date', $filters['month']))
+            ->when($filters['year'] !== '', fn (Builder $query) => $query->whereYear('incident_date', $filters['year']));
+    }
+
+    protected function incidentMarker(IncidentReport $report): ?array
+    {
+        $latitude = $report->verified_latitude ?? $report->latitude;
+        $longitude = $report->verified_longitude ?? $report->longitude;
+
+        if ($latitude === null || $longitude === null) {
+            return null;
+        }
+
+        $locationName = $report->verifiedLocation?->name ?? $report->location?->name ?? '-';
+        $specificLocation = $report->verified_specific_location ?? $report->specific_location ?? '-';
+
+        return [
+            'id' => $report->id,
+            'report_number' => $report->report_number,
+            'title' => $report->title,
+            'reporter' => $report->reporter?->name ?? $report->reporter_name ?? '-',
+            'location' => $locationName,
+            'specific_location' => $specificLocation,
+            'category' => $report->category?->name ?? '-',
+            'severity_level' => $report->severity_level ?: '-',
+            'status' => $report->status,
+            'incident_date' => optional($report->incident_date)->format('d M Y'),
+            'latitude' => (float) $latitude,
+            'longitude' => (float) $longitude,
+            'scope' => $locationName === 'Diluar Polman' ? 'outside' : 'inside',
+            'show_url' => route('satgas.incidents.show', $report),
+        ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Support\Hazards;
 
 use App\Models\HazardMapPoint;
+use App\Models\IncidentReport;
 use App\Models\PotentialHazardReport;
 
 class PublicHazardMapData
@@ -97,9 +98,11 @@ class PublicHazardMapData
 
         $hazardMarkers = $hazardMarkers->concat($mapPointMarkers)->values();
         $floorplanMarkers = $floorplanMarkers->concat($floorplanMapPointMarkers)->values();
+        $incidentMarkers = $this->incidentMarkers();
 
         return [
             'hazardMarkers' => $hazardMarkers,
+            'incidentMarkers' => $incidentMarkers,
             'floorplanMarkers' => $floorplanMarkers,
             'summaryCounts' => [
                 'total' => $hazardMarkers->count() + $floorplanMarkers->count(),
@@ -109,7 +112,47 @@ class PublicHazardMapData
                     + $floorplanMarkers->where('status', '!=', 'resolved')->count(),
             ],
             'campusBuildingPolygons' => $this->campusBuildingPolygons(),
+            'campusBoundaryPolygon' => $this->campusBoundaryPolygon(),
         ];
+    }
+
+    protected function incidentMarkers()
+    {
+        return IncidentReport::query()
+            ->with(['category', 'location', 'verifiedLocation'])
+            ->where(function ($query) {
+                $query
+                    ->where(function ($subQuery) {
+                        $subQuery->whereNotNull('verified_latitude')->whereNotNull('verified_longitude');
+                    })
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->whereNotNull('latitude')->whereNotNull('longitude');
+                    });
+            })
+            ->latest('incident_date')
+            ->limit(500)
+            ->get()
+            ->map(function (IncidentReport $report) {
+                $latitude = $report->verified_latitude ?? $report->latitude;
+                $longitude = $report->verified_longitude ?? $report->longitude;
+                $locationName = $report->verifiedLocation?->name ?? $report->location?->name ?? '-';
+
+                return [
+                    'id' => $report->id,
+                    'report_number' => $report->report_number,
+                    'title' => $report->title,
+                    'location' => $locationName,
+                    'specific_location' => $report->verified_specific_location ?? $report->specific_location ?? '-',
+                    'category' => $report->category?->name ?? '-',
+                    'severity_level' => $report->severity_level ?: 'medium',
+                    'status' => $report->status,
+                    'incident_date' => optional($report->incident_date)->format('d M Y'),
+                    'latitude' => (float) $latitude,
+                    'longitude' => (float) $longitude,
+                    'scope' => $locationName === 'Diluar Polman' ? 'outside' : 'inside',
+                ];
+            })
+            ->values();
     }
 
     public function campusBuildingPolygons(): array
@@ -174,6 +217,34 @@ class PublicHazardMapData
                     [-6.87693, 107.62038],
                 ],
             ],
+        ];
+    }
+
+    public function campusBoundaryPolygon(): array
+    {
+        return [
+            [-6.87715887735517, 107.61984870172961],
+            [-6.87776142492383, 107.61981835600203],
+            [-6.877674808757875, 107.62141909313236],
+            [-6.878032571080371, 107.62151392353108],
+            [-6.878484174399816, 107.62131657771924],
+            [-6.8788463291320125, 107.62168135810514],
+            [-6.878484174399816, 107.62201931640384],
+            [-6.878036806408215, 107.6221373335875],
+            [-6.877024901063348, 107.62203540965614],
+            [-6.876455037630919, 107.6218530194632],
+            [-6.875885173514988, 107.62182083295856],
+            [-6.875879847678909, 107.6215150611645],
+            [-6.876401779331286, 107.621203924953],
+            [-6.876375150179223, 107.62074794947064],
+            [-6.876391127670642, 107.6202436942313],
+            [-6.876380476009756, 107.62023296539644],
+            [-6.876790564781358, 107.62022760097899],
+            [-6.876827845561228, 107.6201042193779],
+            [-6.8768225197357085, 107.62013104146509],
+            [-6.877152720804798, 107.62017932122203],
+            [-6.877158046626614, 107.61985209175822],
+            [-6.877152720804798, 107.61984672734077],
         ];
     }
 }

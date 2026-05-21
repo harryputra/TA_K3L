@@ -34,6 +34,8 @@ class UserDashboardFeatureTest extends TestCase
             'reported_by' => $user->id,
             'incident_category_id' => $category->id,
             'location_id' => $location->id,
+            'latitude' => -6.8761000,
+            'longitude' => 107.6206300,
             'incident_date' => '2026-04-25',
             'incident_time' => '08:30:00',
             'severity_level' => 'medium',
@@ -80,6 +82,8 @@ class UserDashboardFeatureTest extends TestCase
             ->assertSeeText('Status Hazard Terbaru')
             ->assertSeeText('Pelindung mesin retak')
             ->assertSeeText('Panduan APD Bengkel')
+            ->assertSeeText('Peta Titik Rawan')
+            ->assertSeeText('Titik Insiden')
             ->assertSeeText('Unsafe Condition');
     }
 

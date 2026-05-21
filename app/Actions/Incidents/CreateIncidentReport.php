@@ -3,6 +3,7 @@
 namespace App\Actions\Incidents;
 
 use App\Models\IncidentAttachment;
+use App\Models\IncidentInjury;
 use App\Models\IncidentReport;
 use App\Support\ActivityLogger;
 use App\Support\WhatsAppReportNotifier;
@@ -22,7 +23,9 @@ class CreateIncidentReport
     {
         return DB::transaction(function () use ($validated, $reporterId) {
             $attachments = $validated['attachments'] ?? [];
+            $injuries = $validated['injuries'] ?? [];
             unset($validated['attachments']);
+            unset($validated['injuries']);
 
             $report = IncidentReport::query()->create([
                 ...$validated,
@@ -34,6 +37,10 @@ class CreateIncidentReport
 
             foreach ($attachments as $attachment) {
                 $this->storeAttachment($report, $attachment, $reporterId);
+            }
+
+            foreach ($injuries as $injury) {
+                $this->storeInjury($report, $injury);
             }
 
             $report->statusHistories()->create([
@@ -62,7 +69,7 @@ class CreateIncidentReport
             $this->whatsAppReportNotifier->incidentCreated($report);
             $this->whatsAppReportNotifier->satgasIncidentCreated($report);
 
-            return $report->load(['category', 'location', 'attachments']);
+            return $report->load(['category', 'location', 'attachments', 'injuries.injuryCategory', 'injuries.bodyPart']);
         });
     }
 
@@ -82,6 +89,24 @@ class CreateIncidentReport
             'file_type' => $attachment->getClientMimeType() ?? 'application/octet-stream',
             'file_size' => $attachment->getSize(),
             'uploaded_by' => $reporterId,
+        ]);
+    }
+
+    protected function storeInjury(IncidentReport $report, array $injury): void
+    {
+        if (
+            blank($injury['injury_category_id'] ?? null) &&
+            blank($injury['body_part_id'] ?? null) &&
+            blank($injury['description'] ?? null)
+        ) {
+            return;
+        }
+
+        IncidentInjury::query()->create([
+            'incident_report_id' => $report->id,
+            'injury_category_id' => $injury['injury_category_id'] ?? null,
+            'body_part_id' => $injury['body_part_id'] ?? null,
+            'description' => $injury['description'] ?? null,
         ]);
     }
 }

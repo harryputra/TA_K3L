@@ -2,6 +2,7 @@
     $selectedUnsafeConditions = old('unsafe_conditions', []);
     $selectedUnsafeActions = old('unsafe_actions', []);
     $selectedPreventions = old('proposed_preventions', []);
+    $isPublicIncidentForm = $isPublicIncidentForm ?? false;
 @endphp
 
 <section class="relative w-full overflow-hidden px-4 pb-20 pt-10 lg:px-8">
@@ -230,38 +231,40 @@
                         </div>
                     </section>
 
-                    <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
-                        <div class="mb-5 flex items-center gap-3">
-                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                                <span class="material-symbols-outlined">task_alt</span>
-                            </span>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900">Usulan pencegahan</h3>
-                                <p class="text-sm text-slate-500">Tambahkan usulan agar kejadian serupa tidak terulang.</p>
+                    @unless ($isPublicIncidentForm)
+                        <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
+                            <div class="mb-5 flex items-center gap-3">
+                                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                                    <span class="material-symbols-outlined">task_alt</span>
+                                </span>
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-900">Usulan pencegahan</h3>
+                                    <p class="text-sm text-slate-500">Tambahkan usulan agar kejadian serupa tidak terulang.</p>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="grid gap-3 md:grid-cols-2">
-                            @foreach ($preventionOptions as $value => $label)
-                                <label class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                                    <input type="checkbox" name="proposed_preventions[]" value="{{ $value }}" class="mt-1 rounded border-slate-300 text-[var(--primary-color)] focus:ring-[var(--primary-color)]" @checked(in_array($value, $selectedPreventions, true))>
-                                    <span>{{ $label }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('proposed_preventions')
-                            <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
-                        @enderror
-
-                        <div class="mt-5">
-                            <label for="prevention_action_plan" class="mb-2 block text-sm font-bold text-slate-700">Hal yang perlu dilakukan untuk menerapkan usulan</label>
-                            <textarea id="prevention_action_plan" name="prevention_action_plan" rows="5" placeholder="Tuliskan langkah penerapan, kebutuhan pengamanan, pelatihan, inspeksi, atau perubahan prosedur."
-                                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">{{ old('prevention_action_plan') }}</textarea>
-                            @error('prevention_action_plan')
+                            <div class="grid gap-3 md:grid-cols-2">
+                                @foreach ($preventionOptions as $value => $label)
+                                    <label class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                                        <input type="checkbox" name="proposed_preventions[]" value="{{ $value }}" class="mt-1 rounded border-slate-300 text-[var(--primary-color)] focus:ring-[var(--primary-color)]" @checked(in_array($value, $selectedPreventions, true))>
+                                        <span>{{ $label }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error('proposed_preventions')
                                 <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
                             @enderror
-                        </div>
-                    </section>
+
+                            <div class="mt-5">
+                                <label for="prevention_action_plan" class="mb-2 block text-sm font-bold text-slate-700">Hal yang perlu dilakukan untuk menerapkan usulan</label>
+                                <textarea id="prevention_action_plan" name="prevention_action_plan" rows="5" placeholder="Tuliskan langkah penerapan, kebutuhan pengamanan, pelatihan, inspeksi, atau perubahan prosedur."
+                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">{{ old('prevention_action_plan') }}</textarea>
+                                @error('prevention_action_plan')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </section>
+                    @endunless
 
                     <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
                         <div class="mb-5 flex items-center gap-3">
@@ -344,7 +347,6 @@
                             </div>
                         </div>
                     </section>
-
                     <section class="rounded-[1.6rem] bg-white p-5 ring-1 ring-slate-200 lg:p-6">
                         <div class="mb-5 flex items-center gap-3">
                             <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--blue-low-opacity)] text-[var(--primary-color)]">
@@ -381,13 +383,137 @@
                                     class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
                                     <option value="">Pilih lokasi</option>
                                     @foreach ($locations as $location)
-                                        <option value="{{ $location->id }}" @selected(old('location_id') == $location->id)>{{ $location->name }}</option>
+                                        <option value="{{ $location->id }}" data-location-name="{{ $location->name }}" @selected(old('location_id') == $location->id)>{{ $location->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('location_id')
                                     <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
                                 @enderror
                             </div>
+
+                            <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4" data-incident-gps>
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">Koordinat GPS lokasi kejadian</p>
+                                        <p class="mt-1 text-xs leading-5 text-slate-500" data-incident-gps-status>
+                                            Sistem akan mengisi koordinat otomatis ketika izin lokasi diberikan.
+                                        </p>
+                                    </div>
+                                    <button type="button" data-incident-gps-button
+                                        class="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--primary-color)]/15 bg-white px-4 py-2 text-xs font-bold text-[var(--primary-color)] transition hover:bg-[var(--blue-low-opacity)]">
+                                        <span class="material-symbols-outlined text-base" data-incident-gps-icon>my_location</span>
+                                        <span data-incident-gps-label>Ambil lokasi</span>
+                                    </button>
+                                </div>
+
+                                <div class="mt-4 grid gap-4 md:grid-cols-3">
+                                    <div>
+                                        <label for="incident-latitude" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Latitude</label>
+                                        <input id="incident-latitude" name="latitude" type="text" value="{{ old('latitude') }}" readonly
+                                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none">
+                                        @error('latitude')
+                                            <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label for="incident-longitude" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Longitude</label>
+                                        <input id="incident-longitude" name="longitude" type="text" value="{{ old('longitude') }}" readonly
+                                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none">
+                                        @error('longitude')
+                                            <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label for="incident-location-accuracy" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Akurasi meter</label>
+                                        <input id="incident-location-accuracy" name="location_accuracy" type="text" value="{{ old('location_accuracy') }}" readonly
+                                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none">
+                                        @error('location_accuracy')
+                                            <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-2 {{ old('specific_location') ? '' : 'hidden' }}" data-incident-specific-location>
+                                <label for="incident-specific-location" class="mb-2 block text-sm font-bold text-slate-700">Patokan lokasi</label>
+                                <input id="incident-specific-location" name="specific_location" type="text" value="{{ old('specific_location') }}"
+                                    placeholder="Contoh: lantai 2 dekat tangga, depan lab CNC, samping panel listrik"
+                                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                <p class="mt-2 text-xs leading-5 text-slate-500" data-incident-specific-location-help>
+                                    Opsional bila titik GPS sudah masuk area gedung. Satgas akan memverifikasi detail lokasi final saat review.
+                                </p>
+                                @error('specific_location')
+                                    <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            @if ($isPublicIncidentForm)
+                                <div class="md:col-span-2 rounded-2xl border border-rose-100 bg-rose-50/60 p-4" data-incident-injuries>
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p class="text-sm font-bold text-slate-800">Catatan luka bila ada</p>
+                                            <p class="mt-1 text-xs leading-5 text-slate-500">Tambahkan setiap titik luka secara terpisah, misalnya tangan kanan memar dan lutut kiri lecet.</p>
+                                        </div>
+                                        <button type="button" data-add-injury
+                                            class="inline-flex items-center justify-center gap-2 rounded-full border border-rose-200 bg-white px-4 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100">
+                                            <span class="material-symbols-outlined text-base">add</span>
+                                            Tambah luka
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-4 grid gap-3" data-injury-list>
+                                        @foreach (old('injuries', [['injury_category_id' => null, 'body_part_id' => null, 'description' => null]]) as $index => $injury)
+                                            <div class="grid gap-3 rounded-2xl bg-white p-3 ring-1 ring-rose-100 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]" data-injury-row>
+                                                <div>
+                                                    <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Jenis luka</label>
+                                                    <select name="injuries[{{ $index }}][injury_category_id]"
+                                                        class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                                        <option value="">Pilih jenis luka</option>
+                                                        @foreach ($injuryCategories as $injuryCategory)
+                                                            <option value="{{ $injuryCategory->id }}" @selected(($injury['injury_category_id'] ?? null) == $injuryCategory->id)>{{ $injuryCategory->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Bagian terdampak</label>
+                                                    <select name="injuries[{{ $index }}][body_part_id]"
+                                                        class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                                        <option value="">Pilih bagian tubuh</option>
+                                                        @foreach ($bodyParts as $bodyPart)
+                                                            <option value="{{ $bodyPart->id }}" @selected(($injury['body_part_id'] ?? null) == $bodyPart->id)>{{ $bodyPart->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Keterangan singkat</label>
+                                                    <input name="injuries[{{ $index }}][description]" type="text" value="{{ $injury['description'] ?? '' }}"
+                                                        placeholder="Contoh: bengkak, berdarah, perih"
+                                                        class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                                </div>
+
+                                                <button type="button" data-remove-injury
+                                                    class="inline-flex h-11 w-11 items-center justify-center self-end rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
+                                                    <span class="material-symbols-outlined text-base">delete</span>
+                                                </button>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    @error('injuries')
+                                        <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                    @error('injuries.*.injury_category_id')
+                                        <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                    @error('injuries.*.body_part_id')
+                                        <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @endif
 
                             <div>
                                 <label for="incident_category_id" class="mb-2 block text-sm font-bold text-slate-700">Kategori insiden</label>
@@ -609,6 +735,262 @@
             };
 
             input.addEventListener('change', renderFiles);
+        })();
+
+        (() => {
+            const form = document.querySelector('[data-report-form="incident"]');
+            const gpsPanel = form?.querySelector('[data-incident-gps]');
+            const button = gpsPanel?.querySelector('[data-incident-gps-button]');
+            const icon = gpsPanel?.querySelector('[data-incident-gps-icon]');
+            const label = gpsPanel?.querySelector('[data-incident-gps-label]');
+            const status = gpsPanel?.querySelector('[data-incident-gps-status]');
+            const latitudeInput = gpsPanel?.querySelector('#incident-latitude');
+            const longitudeInput = gpsPanel?.querySelector('#incident-longitude');
+            const accuracyInput = gpsPanel?.querySelector('#incident-location-accuracy');
+            const locationSelect = form?.querySelector('#location_id');
+            const specificLocationPanel = form?.querySelector('[data-incident-specific-location]');
+            const specificLocationInput = form?.querySelector('#incident-specific-location');
+            const specificLocationHelp = form?.querySelector('[data-incident-specific-location-help]');
+            const campusBuildings = @json($campusBuildingPolygons ?? []);
+
+            if (!gpsPanel || !button || !latitudeInput || !longitudeInput || !accuracyInput || !status) {
+                return;
+            }
+
+            const setButtonState = (isLoading) => {
+                button.disabled = isLoading;
+                button.classList.toggle('opacity-60', isLoading);
+                button.classList.toggle('cursor-wait', isLoading);
+
+                if (icon) {
+                    icon.textContent = isLoading ? 'progress_activity' : 'my_location';
+                }
+                if (label) {
+                    label.textContent = isLoading ? 'Mengambil...' : 'Ambil lokasi';
+                }
+            };
+
+            const normalize = (value) => String(value || '')
+                .toLowerCase()
+                .replace(/&/g, 'dan')
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+
+            const isPointInsidePolygon = ([lat, lng], polygon) => {
+                let inside = false;
+
+                for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                    const yi = polygon[i][0];
+                    const xi = polygon[i][1];
+                    const yj = polygon[j][0];
+                    const xj = polygon[j][1];
+                    const intersects = ((yi > lat) !== (yj > lat))
+                        && (lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi);
+
+                    if (intersects) {
+                        inside = !inside;
+                    }
+                }
+
+                return inside;
+            };
+
+            const buildingAt = (lat, lng) => campusBuildings.find((building) => (
+                Array.isArray(building.coordinates) && isPointInsidePolygon([lat, lng], building.coordinates)
+            ));
+
+            const selectLocationByName = (name) => {
+                if (!locationSelect) {
+                    return false;
+                }
+
+                const targetName = normalize(name);
+                const option = Array.from(locationSelect.options).find((item) => (
+                    normalize(item.dataset.locationName || item.textContent) === targetName
+                ));
+
+                if (!option) {
+                    return false;
+                }
+
+                locationSelect.value = option.value;
+                locationSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                return true;
+            };
+
+            const showSpecificLocation = (detectedName, isOutsidePolman = false) => {
+                if (!specificLocationPanel || !specificLocationInput) {
+                    return;
+                }
+
+                specificLocationPanel.classList.remove('hidden');
+                if (isOutsidePolman) {
+                    specificLocationInput.required = true;
+                    specificLocationInput.placeholder = 'Contoh: depan gerbang, jalan sekitar kampus, atau alamat titik kejadian';
+                    if (specificLocationHelp) {
+                        specificLocationHelp.textContent = 'Koordinat berada di luar polygon Polman. Tambahkan alamat atau patokan terdekat.';
+                    }
+                    return;
+                }
+
+                specificLocationInput.required = false;
+                specificLocationInput.placeholder = `Contoh: lantai/ruang/titik spesifik di ${detectedName}`;
+                if (specificLocationHelp) {
+                    specificLocationHelp.textContent = `Lokasi utama otomatis terisi ${detectedName}. Patokan boleh diisi singkat; detail final akan diverifikasi Satgas.`;
+                }
+            };
+
+            const applyDetectedLocation = (lat, lng) => {
+                const detected = buildingAt(lat, lng);
+
+                if (detected) {
+                    const isSelected = selectLocationByName(detected.name);
+                    showSpecificLocation(detected.name, false);
+
+                    status.textContent = isSelected
+                        ? `Koordinat masuk area ${detected.name}. Lokasi kejadian terisi otomatis.`
+                        : `Koordinat masuk area ${detected.name}, tetapi nama lokasi belum ada di master lokasi.`;
+                    return;
+                }
+
+                const isOutsideSelected = selectLocationByName('Diluar Polman');
+                showSpecificLocation('Diluar Polman', true);
+                status.textContent = isOutsideSelected
+                    ? 'Koordinat berada di luar polygon Polman. Lokasi kejadian terisi Diluar Polman.'
+                    : 'Koordinat berada di luar polygon Polman, tetapi lokasi Diluar Polman belum ada di master lokasi.';
+            };
+
+            const captureLocation = () => {
+                if (!navigator.geolocation) {
+                    status.textContent = 'Browser ini belum mendukung GPS. Koordinat bisa dikosongkan.';
+                    button.disabled = true;
+                    button.classList.add('opacity-50', 'cursor-not-allowed');
+                    return;
+                }
+
+                setButtonState(true);
+                status.textContent = 'Meminta izin lokasi dan membaca koordinat GPS...';
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        latitudeInput.value = position.coords.latitude.toFixed(7);
+                        longitudeInput.value = position.coords.longitude.toFixed(7);
+                        accuracyInput.value = Number(position.coords.accuracy || 0).toFixed(2);
+                        applyDetectedLocation(position.coords.latitude, position.coords.longitude);
+                        status.textContent = `${status.textContent} Akurasi sekitar ${accuracyInput.value} meter.`;
+                        setButtonState(false);
+                    },
+                    () => {
+                        status.textContent = 'Koordinat belum terisi. Izinkan akses lokasi lalu tekan Ambil lokasi.';
+                        setButtonState(false);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 12000,
+                        maximumAge: 60000,
+                    },
+                );
+            };
+
+            button.addEventListener('click', captureLocation);
+
+            if (latitudeInput.value.trim() === '' || longitudeInput.value.trim() === '') {
+                captureLocation();
+            } else {
+                applyDetectedLocation(Number(latitudeInput.value), Number(longitudeInput.value));
+            }
+        })();
+
+        (() => {
+            const form = document.querySelector('[data-report-form="incident"]');
+            const injuryPanel = form?.querySelector('[data-incident-injuries]');
+            const list = injuryPanel?.querySelector('[data-injury-list]');
+            const addButton = injuryPanel?.querySelector('[data-add-injury]');
+
+            if (!injuryPanel || !list || !addButton) {
+                return;
+            }
+
+            const injuryOptions = @json($injuryCategories->map(fn ($item) => ['id' => $item->id, 'name' => $item->name])->values());
+            const bodyPartOptions = @json($bodyParts->map(fn ($item) => ['id' => $item->id, 'name' => $item->name])->values());
+
+            const optionMarkup = (options, placeholder) => [
+                `<option value="">${placeholder}</option>`,
+                ...options.map((option) => `<option value="${option.id}">${option.name}</option>`),
+            ].join('');
+
+            const createRow = (index) => {
+                const row = document.createElement('div');
+                row.className = 'grid gap-3 rounded-2xl bg-white p-3 ring-1 ring-rose-100 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]';
+                row.dataset.injuryRow = '';
+                row.innerHTML = `
+                    <div>
+                        <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Jenis luka</label>
+                        <select name="injuries[${index}][injury_category_id]" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                            ${optionMarkup(injuryOptions, 'Pilih jenis luka')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Bagian terdampak</label>
+                        <select name="injuries[${index}][body_part_id]" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                            ${optionMarkup(bodyPartOptions, 'Pilih bagian tubuh')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Keterangan singkat</label>
+                        <input name="injuries[${index}][description]" type="text" placeholder="Contoh: bengkak, berdarah, perih" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                    </div>
+                    <button type="button" data-remove-injury class="inline-flex h-11 w-11 items-center justify-center self-end rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
+                        <span class="material-symbols-outlined text-base">delete</span>
+                    </button>
+                `;
+                return row;
+            };
+
+            const reindexRows = () => {
+                Array.from(list.querySelectorAll('[data-injury-row]')).forEach((row, index) => {
+                    row.querySelectorAll('[name]').forEach((field) => {
+                        field.name = field.name.replace(/injuries\[\d+\]/, `injuries[${index}]`);
+                    });
+                });
+            };
+
+            const updateRemoveButtons = () => {
+                const rows = Array.from(list.querySelectorAll('[data-injury-row]'));
+                rows.forEach((row) => {
+                    const removeButton = row.querySelector('[data-remove-injury]');
+                    if (removeButton) {
+                        removeButton.disabled = rows.length === 1;
+                        removeButton.classList.toggle('opacity-40', rows.length === 1);
+                        removeButton.classList.toggle('cursor-not-allowed', rows.length === 1);
+                    }
+                });
+            };
+
+            addButton.addEventListener('click', () => {
+                const rows = list.querySelectorAll('[data-injury-row]');
+
+                if (rows.length >= 10) {
+                    return;
+                }
+
+                list.appendChild(createRow(rows.length));
+                updateRemoveButtons();
+            });
+
+            list.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('[data-remove-injury]');
+
+                if (!removeButton || list.querySelectorAll('[data-injury-row]').length === 1) {
+                    return;
+                }
+
+                removeButton.closest('[data-injury-row]')?.remove();
+                reindexRows();
+                updateRemoveButtons();
+            });
+
+            updateRemoveButtons();
         })();
 
         (() => {

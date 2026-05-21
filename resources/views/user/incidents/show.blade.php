@@ -121,6 +121,23 @@
                                 <dd class="mt-2 text-sm text-slate-800">{{ $incidentReport->location?->name ?? '-' }}</dd>
                             </div>
                             <div>
+                                <dt class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Detail lokasi</dt>
+                                <dd class="mt-2 text-sm text-slate-800">{{ $incidentReport->specific_location ?: '-' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Koordinat GPS</dt>
+                                <dd class="mt-2 text-sm text-slate-800">
+                                    @if ($incidentReport->latitude && $incidentReport->longitude)
+                                        {{ $incidentReport->latitude }}, {{ $incidentReport->longitude }}
+                                        @if ($incidentReport->location_accuracy)
+                                            <span class="text-slate-500">(akurasi {{ $incidentReport->location_accuracy }} m)</span>
+                                        @endif
+                                    @else
+                                        -
+                                    @endif
+                                </dd>
+                            </div>
+                            <div>
                                 <dt class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Tanggal</dt>
                                 <dd class="mt-2 text-sm text-slate-800">{{ optional($incidentReport->incident_date)->format('d M Y') }} {{ $incidentReport->incident_time ? substr($incidentReport->incident_time, 0, 5) : '' }}</dd>
                             </div>
@@ -171,6 +188,19 @@
                                 <dd class="mt-2 text-sm text-slate-800">{{ $incidentReport->ppe_used ?: '-' }}</dd>
                             </div>
                         </dl>
+                        @if ($incidentReport->injuries->isNotEmpty())
+                            <div class="mt-6 border-t border-slate-200 pt-5">
+                                <p class="text-sm font-semibold text-slate-900">Catatan luka dari pelapor</p>
+                                <div class="mt-3 grid gap-3">
+                                    @foreach ($incidentReport->injuries as $injury)
+                                        <div class="rounded-2xl bg-[#f8fbff] px-4 py-3 text-sm text-slate-700">
+                                            <p class="font-semibold text-slate-900">{{ $injury->injuryCategory?->name ?? '-' }}</p>
+                                            <p class="mt-1">{{ $injury->bodyPart?->name ?? '-' }}{{ $injury->description ? ' - '.$injury->description : '' }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="rounded-[1.2rem] bg-white/95 p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] ring-1 ring-[var(--primary-color)]/8 lg:p-8">

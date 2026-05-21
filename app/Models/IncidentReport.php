@@ -28,6 +28,17 @@ class IncidentReport extends Model
         'injury_category_id',
         'body_part_id',
         'location_id',
+        'latitude',
+        'longitude',
+        'location_accuracy',
+        'specific_location',
+        'verified_location_id',
+        'verified_specific_location',
+        'verified_latitude',
+        'verified_longitude',
+        'verified_location_accuracy',
+        'location_verified_by',
+        'location_verified_at',
         'incident_date',
         'incident_time',
         'witness_name',
@@ -59,6 +70,13 @@ class IncidentReport extends Model
     {
         return [
             'incident_date' => 'date',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+            'location_accuracy' => 'decimal:2',
+            'verified_latitude' => 'decimal:7',
+            'verified_longitude' => 'decimal:7',
+            'verified_location_accuracy' => 'decimal:2',
+            'location_verified_at' => 'datetime',
             'unsafe_conditions' => 'array',
             'unsafe_actions' => 'array',
             'warning_given_before_incident' => 'boolean',
@@ -95,9 +113,24 @@ class IncidentReport extends Model
         return $this->belongsTo(BodyPart::class);
     }
 
+    public function injuries(): HasMany
+    {
+        return $this->hasMany(IncidentInjury::class);
+    }
+
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function verifiedLocation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'verified_location_id');
+    }
+
+    public function locationVerifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'location_verified_by');
     }
 
     public function assignedSatgas(): BelongsTo

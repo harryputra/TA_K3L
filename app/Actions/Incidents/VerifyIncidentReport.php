@@ -25,6 +25,13 @@ class VerifyIncidentReport
                 'injury_category_id' => $classification['injury_category_id'] ?? $incidentReport->injury_category_id,
                 'body_part_id' => $classification['body_part_id'] ?? $incidentReport->body_part_id,
                 'impact' => $classification['impact'] ?? $incidentReport->impact,
+                'verified_location_id' => $classification['verified_location_id'] ?? $incidentReport->verified_location_id ?? $incidentReport->location_id,
+                'verified_specific_location' => $classification['verified_specific_location'] ?? $incidentReport->verified_specific_location ?? $incidentReport->specific_location,
+                'verified_latitude' => $classification['verified_latitude'] ?? $incidentReport->verified_latitude ?? $incidentReport->latitude,
+                'verified_longitude' => $classification['verified_longitude'] ?? $incidentReport->verified_longitude ?? $incidentReport->longitude,
+                'verified_location_accuracy' => $classification['verified_location_accuracy'] ?? $incidentReport->verified_location_accuracy ?? $incidentReport->location_accuracy,
+                'location_verified_by' => $verifierId,
+                'location_verified_at' => now(),
                 'verified_by' => $verifierId,
                 'verified_at' => now(),
             ]);
@@ -62,6 +69,7 @@ class VerifyIncidentReport
             return $incidentReport->fresh([
                 'category',
                 'location',
+                'verifiedLocation',
                 'reporter',
                 'statusHistories.changer',
             ]);

@@ -17,6 +17,22 @@ class StoreIncidentReportRequestTest extends TestCase
             'title' => 'Tumpahan bahan kimia ringan di meja praktikum',
             'incident_category_id' => 1,
             'location_id' => 10,
+            'latitude' => '-6.8761000',
+            'longitude' => '107.6206300',
+            'location_accuracy' => '8.50',
+            'specific_location' => 'Lantai 2 dekat panel utama',
+            'injuries' => [
+                [
+                    'injury_category_id' => 2,
+                    'body_part_id' => 3,
+                    'description' => 'Lecet ringan',
+                ],
+                [
+                    'injury_category_id' => 3,
+                    'body_part_id' => 4,
+                    'description' => 'Memar',
+                ],
+            ],
             'incident_date' => now()->toDateString(),
             'incident_time' => '09:30',
             'severity_level' => 'medium',
@@ -30,11 +46,41 @@ class StoreIncidentReportRequestTest extends TestCase
 
         $validator->setPresenceVerifier(new FakePresenceVerifier([
             'incident_categories' => [1],
+            'injury_categories' => [2, 3],
+            'body_parts' => [3, 4],
             'locations' => [10],
             'users' => [5],
         ]));
 
         $this->assertTrue($validator->passes());
+    }
+
+    public function test_validation_fails_for_invalid_gps_coordinates(): void
+    {
+        $request = new StoreIncidentReportRequest();
+
+        $validator = Validator::make([
+            'title' => 'Tumpahan bahan kimia ringan di meja praktikum',
+            'incident_category_id' => 1,
+            'location_id' => 10,
+            'latitude' => '-91',
+            'longitude' => '181',
+            'location_accuracy' => '-1',
+            'incident_date' => now()->toDateString(),
+            'chronology' => 'Saat praktikum berlangsung, area kejadian diamankan dan dosen diberi tahu oleh mahasiswa.',
+        ], $request->rules(), $request->messages());
+
+        $validator->setPresenceVerifier(new FakePresenceVerifier([
+            'incident_categories' => [1],
+            'locations' => [10],
+        ]));
+
+        $this->assertTrue($validator->fails());
+        $this->assertSame([
+            'latitude',
+            'longitude',
+            'location_accuracy',
+        ], array_keys($validator->errors()->messages()));
     }
 
     public function test_validation_fails_for_an_invalid_incident_report_payload(): void

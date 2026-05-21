@@ -91,6 +91,23 @@
                         <p class="mt-2 text-slate-800">{{ $incidentReport->location?->name ?? '-' }}</p>
                     </div>
                     <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Detail lokasi</p>
+                        <p class="mt-2 text-slate-800">{{ $incidentReport->specific_location ?: '-' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Koordinat GPS</p>
+                        <p class="mt-2 text-slate-800">
+                            @if ($incidentReport->latitude && $incidentReport->longitude)
+                                {{ $incidentReport->latitude }}, {{ $incidentReport->longitude }}
+                                @if ($incidentReport->location_accuracy)
+                                    <span class="text-slate-500">(akurasi {{ $incidentReport->location_accuracy }} m)</span>
+                                @endif
+                            @else
+                                -
+                            @endif
+                        </p>
+                    </div>
+                    <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Tanggal</p>
                         <p class="mt-2 text-slate-800">{{ optional($incidentReport->incident_date)->format('d M Y') }} {{ $incidentReport->incident_time ? substr($incidentReport->incident_time, 0, 5) : '' }}</p>
                     </div>
@@ -110,6 +127,19 @@
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Saksi</p>
                         <p class="mt-2 text-slate-800">{{ $incidentReport->witness_name ?: '-' }}</p>
                     </div>
+                </div>
+
+                <div class="mt-6 rounded-3xl bg-[#f8fbff] p-4 text-sm ring-1 ring-slate-200">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Lokasi Final Satgas</p>
+                    <p class="mt-2 font-semibold text-slate-900">{{ $incidentReport->verifiedLocation?->name ?? 'Belum diverifikasi' }}</p>
+                    <p class="mt-1 text-slate-700">{{ $incidentReport->verified_specific_location ?: '-' }}</p>
+                    <p class="mt-1 text-slate-600">
+                        @if ($incidentReport->verified_latitude && $incidentReport->verified_longitude)
+                            {{ $incidentReport->verified_latitude }}, {{ $incidentReport->verified_longitude }}
+                        @else
+                            Koordinat final belum ditetapkan.
+                        @endif
+                    </p>
                 </div>
 
                 <div class="mt-8 space-y-5 text-sm leading-7 text-slate-700">
@@ -146,6 +176,19 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Bagian tubuh cedera</p>
                         <p class="mt-2 text-slate-800">{{ $incidentReport->bodyPart?->name ?? '-' }}</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Catatan luka dari pelapor</p>
+                        <div class="mt-2 grid gap-3">
+                            @forelse ($incidentReport->injuries as $injury)
+                                <div class="rounded-2xl bg-slate-50 px-4 py-3">
+                                    <p class="font-semibold text-slate-900">{{ $injury->injuryCategory?->name ?? '-' }}</p>
+                                    <p class="mt-1 text-slate-800">{{ $injury->bodyPart?->name ?? '-' }}{{ $injury->description ? ' - '.$injury->description : '' }}</p>
+                                </div>
+                            @empty
+                                <p class="text-slate-800">-</p>
+                            @endforelse
+                        </div>
                     </div>
                     <div class="sm:col-span-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">APD digunakan</p>
@@ -233,6 +276,83 @@
                             @error('impact')
                                 <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
                             @enderror
+                        </div>
+
+                        <div class="rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-900">Verifikasi lokasi GIS</p>
+                                    <p class="mt-1 text-xs leading-5 text-slate-500">
+                                        Data pelapor: {{ $incidentReport->location?->name ?? '-' }}
+                                        @if ($incidentReport->specific_location)
+                                            - {{ $incidentReport->specific_location }}
+                                        @endif
+                                    </p>
+                                </div>
+                                <button type="button" data-use-reporter-location
+                                    class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
+                                    Pakai data pelapor
+                                </button>
+                            </div>
+
+                            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                                <div class="sm:col-span-2">
+                                    <label for="verified_location_id" class="mb-2 block text-sm font-semibold text-slate-800">Lokasi terverifikasi</label>
+                                    <select id="verified_location_id" name="verified_location_id"
+                                        class="w-full rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40">
+                                        <option value="">Pilih lokasi final</option>
+                                        @foreach ($locations as $location)
+                                            <option value="{{ $location->id }}" @selected(old('verified_location_id', $incidentReport->verified_location_id ?? $incidentReport->location_id) == $location->id)>
+                                                {{ $location->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('verified_location_id')
+                                        <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <label for="verified_specific_location" class="mb-2 block text-sm font-semibold text-slate-800">Detail lokasi terverifikasi</label>
+                                    <input id="verified_specific_location" name="verified_specific_location" type="text"
+                                        value="{{ old('verified_specific_location', $incidentReport->verified_specific_location ?? $incidentReport->specific_location) }}"
+                                        placeholder="Contoh: Lantai 2, sisi utara panel utama"
+                                        class="w-full rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40">
+                                    @error('verified_specific_location')
+                                        <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="verified_latitude" class="mb-2 block text-sm font-semibold text-slate-800">Latitude final</label>
+                                    <input id="verified_latitude" name="verified_latitude" type="text"
+                                        value="{{ old('verified_latitude', $incidentReport->verified_latitude ?? $incidentReport->latitude) }}"
+                                        class="w-full rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40">
+                                    @error('verified_latitude')
+                                        <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="verified_longitude" class="mb-2 block text-sm font-semibold text-slate-800">Longitude final</label>
+                                    <input id="verified_longitude" name="verified_longitude" type="text"
+                                        value="{{ old('verified_longitude', $incidentReport->verified_longitude ?? $incidentReport->longitude) }}"
+                                        class="w-full rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40">
+                                    @error('verified_longitude')
+                                        <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="verified_location_accuracy" class="mb-2 block text-sm font-semibold text-slate-800">Akurasi final meter</label>
+                                    <input id="verified_location_accuracy" name="verified_location_accuracy" type="text"
+                                        value="{{ old('verified_location_accuracy', $incidentReport->verified_location_accuracy ?? $incidentReport->location_accuracy) }}"
+                                        class="w-full rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--blue-low-opacity)]/40">
+                                    @error('verified_location_accuracy')
+                                        <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <button type="submit" class="inline-flex rounded-full bg-[var(--primary-color)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-deep)]">
@@ -385,4 +505,50 @@
             </div>
         </div>
     </section>
+
+    @push('scripts')
+        <script>
+            (() => {
+                const button = document.querySelector('[data-use-reporter-location]');
+
+                if (!button) {
+                    return;
+                }
+
+                const reporterLocation = {
+                    locationId: @json($incidentReport->location_id),
+                    specificLocation: @json($incidentReport->specific_location),
+                    latitude: @json($incidentReport->latitude),
+                    longitude: @json($incidentReport->longitude),
+                    accuracy: @json($incidentReport->location_accuracy),
+                };
+
+                const fields = {
+                    locationId: document.getElementById('verified_location_id'),
+                    specificLocation: document.getElementById('verified_specific_location'),
+                    latitude: document.getElementById('verified_latitude'),
+                    longitude: document.getElementById('verified_longitude'),
+                    accuracy: document.getElementById('verified_location_accuracy'),
+                };
+
+                button.addEventListener('click', () => {
+                    if (fields.locationId) {
+                        fields.locationId.value = reporterLocation.locationId || '';
+                    }
+                    if (fields.specificLocation) {
+                        fields.specificLocation.value = reporterLocation.specificLocation || '';
+                    }
+                    if (fields.latitude) {
+                        fields.latitude.value = reporterLocation.latitude || '';
+                    }
+                    if (fields.longitude) {
+                        fields.longitude.value = reporterLocation.longitude || '';
+                    }
+                    if (fields.accuracy) {
+                        fields.accuracy.value = reporterLocation.accuracy || '';
+                    }
+                });
+            })();
+        </script>
+    @endpush
 @endsection

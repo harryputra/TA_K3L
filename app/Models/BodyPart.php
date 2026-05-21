@@ -16,4 +16,9 @@ class BodyPart extends Model
     {
         return $this->hasMany(IncidentReport::class);
     }
+
+    public function incidentInjuries(): HasMany
+    {
+        return $this->hasMany(IncidentInjury::class);
+    }
 }

@@ -91,6 +91,8 @@ Route::middleware(['auth', 'active.user', 'role:satgas'])->prefix('satgas')->nam
         Route::get('/create', [SatgasIncidentReportController::class, 'create'])->name('create');
         Route::post('/', [SatgasIncidentReportController::class, 'store'])->name('store');
         Route::get('/', [IncidentReviewController::class, 'index'])->name('index');
+        Route::get('/gis', [IncidentReviewController::class, 'gis'])->name('gis');
+        Route::get('/gis/export', [IncidentReviewController::class, 'exportGis'])->name('gis.export');
         Route::get('/{incidentReport}', [IncidentReviewController::class, 'show'])->name('show');
         Route::patch('/{incidentReport}/verify', [IncidentReviewController::class, 'verify'])->name('verify');
         Route::patch('/{incidentReport}/status', [IncidentReviewController::class, 'updateStatus'])->name('update-status');

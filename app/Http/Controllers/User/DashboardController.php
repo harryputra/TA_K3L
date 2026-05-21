@@ -38,6 +38,7 @@ class DashboardController extends Controller
             : collect();
         [
             'hazardMarkers' => $hazardMarkers,
+            'incidentMarkers' => $incidentMarkers,
             'floorplanMarkers' => $floorplanMarkers,
             'summaryCounts' => $summaryCounts,
             'campusBuildingPolygons' => $campusBuildingPolygons,
@@ -50,6 +51,7 @@ class DashboardController extends Controller
             'knowledgeRecommendations',
             'emergencyContacts',
             'hazardMarkers',
+            'incidentMarkers',
             'floorplanMarkers',
             'summaryCounts',
             'campusBuildingPolygons',

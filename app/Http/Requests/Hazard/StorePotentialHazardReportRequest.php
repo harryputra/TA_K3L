@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Hazard;
 
+use App\Support\Hazards\PublicHazardMapData;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StorePotentialHazardReportRequest extends FormRequest
 {
@@ -21,7 +23,10 @@ class StorePotentialHazardReportRequest extends FormRequest
             'reporter_whatsapp' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
             'hazard_type' => ['required', Rule::in(['lingkungan', 'peralatan', 'listrik', 'zat-kimia'])],
             'location_id' => ['required', 'integer', 'exists:locations,id'],
-            'specific_location' => ['nullable', 'string', 'max:255'],
+            'specific_location' => ['required', 'string', 'max:255'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'location_accuracy' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png', 'max:5120'],
@@ -33,11 +38,31 @@ class StorePotentialHazardReportRequest extends FormRequest
         return [
             'hazard_type.in' => 'Jenis temuan yang dipilih tidak valid.',
             'location_id.exists' => 'Lokasi yang dipilih tidak valid.',
+            'specific_location.required' => 'Detail lokasi hazard wajib diisi.',
+            'latitude.required' => 'Koordinat GPS hazard wajib diambil.',
+            'longitude.required' => 'Koordinat GPS hazard wajib diambil.',
             'reporter_whatsapp.regex' => 'Nomor WhatsApp hanya boleh berisi angka, spasi, +, -, dan tanda kurung.',
             'attachments.max' => 'Jumlah lampiran maksimal 3 file.',
             'attachments.*.mimes' => 'Lampiran hanya boleh berupa JPG, JPEG, atau PNG.',
             'attachments.*.max' => 'Ukuran tiap lampiran maksimal 5 MB.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if ($validator->errors()->has('latitude') || $validator->errors()->has('longitude')) {
+                return;
+            }
+
+            $latitude = (float) $this->input('latitude');
+            $longitude = (float) $this->input('longitude');
+            $boundary = app(PublicHazardMapData::class)->campusBoundaryPolygon();
+
+            if (! $this->isPointInsidePolygon([$latitude, $longitude], $boundary)) {
+                $validator->errors()->add('latitude', 'Koordinat hazard harus berada di area Polman.');
+            }
+        });
     }
 
     protected function prepareForValidation(): void
@@ -56,5 +81,24 @@ class StorePotentialHazardReportRequest extends FormRequest
             'reporter_email' => $this->input('reporter_email') ?: $this->user()->email,
             'reporter_whatsapp' => $whatsapp,
         ]);
+    }
+
+    protected function isPointInsidePolygon(array $point, array $polygon): bool
+    {
+        [$lat, $lng] = $point;
+        $inside = false;
+
+        for ($i = 0, $j = count($polygon) - 1; $i < count($polygon); $j = $i++) {
+            [$latI, $lngI] = $polygon[$i];
+            [$latJ, $lngJ] = $polygon[$j];
+            $intersects = (($lngI > $lng) !== ($lngJ > $lng))
+                && ($lat < (($latJ - $latI) * ($lng - $lngI)) / ($lngJ - $lngI) + $latI);
+
+            if ($intersects) {
+                $inside = ! $inside;
+            }
+        }
+
+        return $inside;
     }
 }

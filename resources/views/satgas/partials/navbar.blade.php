@@ -1,52 +1,48 @@
-<div id="satgas-floating-navbar" class="fixed inset-x-0 top-0 z-[99] flex w-full justify-center px-4 pt-4 transition-all duration-300 ease-out translate-y-0 opacity-100">
-    <nav
-        class="frosted-panel pointer-events-auto flex w-full max-w-[1360px] flex-wrap items-center justify-between gap-4 rounded-[2rem] px-4 py-3 sm:px-5">
-        <div class="flex items-center gap-4">
-            <div class="logo flex h-15 w-15 items-center justify-center rounded-full bg-white p-3">
-                <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-10 w-9">
+@php
+    $mainLinks = [
+        ['route' => 'satgas.dashboard', 'active' => ['satgas.dashboard'], 'icon' => 'home_app_logo', 'label' => 'Dashboard'],
+        ['route' => 'satgas.incidents.index', 'active' => ['satgas.incidents.index', 'satgas.incidents.show', 'satgas.incidents.create'], 'icon' => 'fact_check', 'label' => 'Review Insiden'],
+        ['route' => 'satgas.hazards.index', 'active' => ['satgas.hazards.index', 'satgas.hazards.show', 'satgas.hazards.create'], 'icon' => 'warning', 'label' => 'Review Hazard'],
+        ['route' => 'satgas.hazards.map', 'active' => ['satgas.hazards.map'], 'icon' => 'map', 'label' => 'GIS Hazard'],
+        ['route' => 'satgas.incidents.gis', 'active' => ['satgas.incidents.gis', 'satgas.incidents.gis.export'], 'icon' => 'satellite_alt', 'label' => 'GIS Insiden'],
+        ['route' => 'satgas.knowledge-articles.index', 'active' => ['satgas.knowledge-articles.*'], 'icon' => 'menu_book', 'label' => 'Knowledge'],
+    ];
+
+    $extraLinks = [
+        ['route' => 'satgas.profile.show', 'active' => ['satgas.profile.*'], 'icon' => 'account_circle', 'label' => 'Profil Satgas'],
+        ['route' => 'satgas.incidents.create', 'active' => ['satgas.incidents.create'], 'icon' => 'note_add', 'label' => 'Buat Laporan Insiden'],
+        ['route' => 'satgas.hazards.create', 'active' => ['satgas.hazards.create'], 'icon' => 'add_alert', 'label' => 'Buat Hazard Report'],
+        ['route' => 'satgas.knowledge-articles.create', 'active' => ['satgas.knowledge-articles.create'], 'icon' => 'edit_square', 'label' => 'Tambah Materi'],
+    ];
+
+    $isActive = fn (array $patterns): bool => collect($patterns)->contains(fn ($pattern) => request()->routeIs($pattern));
+@endphp
+
+<div id="satgas-floating-navbar" class="fixed inset-x-0 top-0 z-[99] flex w-full justify-center px-3 pt-3 transition-all duration-300 ease-out translate-y-0 opacity-100 sm:px-4 sm:pt-4">
+    <nav class="frosted-panel pointer-events-auto relative flex w-full max-w-[1360px] items-center justify-between gap-3 rounded-[1.5rem] px-3 py-3 sm:px-5 lg:rounded-[2rem]">
+        <a href="{{ route('satgas.dashboard') }}" class="flex min-w-0 items-center gap-3">
+            <div class="logo flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white p-2 sm:h-15 sm:w-15 sm:p-3">
+                <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-8 w-7 sm:h-10 sm:w-9">
             </div>
-            <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.32em] text-[var(--primary-color)]/70">Portal K3L</p>
-                <h2 class="text-lg font-bold text-[var(--primary-color)]">SIAGA POLMAN</h2>
+            <div class="min-w-0">
+                <p class="hidden text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--primary-color)]/70 sm:block lg:text-[11px] lg:tracking-[0.32em]">Portal K3L</p>
+                <h2 class="truncate text-base font-bold text-[var(--primary-color)] sm:text-lg">SIAGA POLMAN</h2>
             </div>
+        </a>
+
+        <div class="hidden h-fit items-center gap-2 rounded-2xl bg-[var(--blue-low-opacity)] px-2 py-2 lg:flex">
+            @foreach ($mainLinks as $link)
+                <a href="{{ route($link['route']) }}"
+                    class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ $isActive($link['active']) ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
+                    <span class="material-symbols-outlined text-[var(--primary-color)]">{{ $link['icon'] }}</span>
+                    <h6 class="font-bold text-[var(--primary-color)]">{{ $link['label'] }}</h6>
+                </a>
+            @endforeach
         </div>
 
-        <div class="flex h-fit flex-wrap items-center gap-2 rounded-2xl bg-[var(--blue-low-opacity)] px-2 py-2">
-            <a href="{{ route('satgas.dashboard') }}"
-                class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('satgas.dashboard') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
-                <span class="material-symbols-outlined text-[var(--primary-color)]">home_app_logo</span>
-                <h6 class="font-bold text-[var(--primary-color)]">Dashboard</h6>
-            </a>
-
-            <a href="{{ route('satgas.incidents.index') }}"
-                class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('satgas.incidents.*') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
-                <span class="material-symbols-outlined text-[var(--primary-color)]">fact_check</span>
-                <h6 class="font-bold text-[var(--primary-color)]">Review Insiden</h6>
-            </a>
-
-            <a href="{{ route('satgas.hazards.index') }}"
-                class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('satgas.hazards.index', 'satgas.hazards.show', 'satgas.hazards.create') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
-                <span class="material-symbols-outlined text-[var(--primary-color)]">warning</span>
-                <h6 class="font-bold text-[var(--primary-color)]">Review Hazard</h6>
-            </a>
-
-            <a href="{{ route('satgas.hazards.map') }}"
-                class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('satgas.hazards.map') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
-                <span class="material-symbols-outlined text-[var(--primary-color)]">map</span>
-                <h6 class="font-bold text-[var(--primary-color)]">GIS</h6>
-            </a>
-
-            <a href="{{ route('satgas.knowledge-articles.index') }}"
-                class="flex flex-row items-center gap-2 rounded-xl px-4 py-3 text-sm transition {{ request()->routeIs('satgas.knowledge-articles.*') ? 'bg-white shadow-sm' : 'hover:bg-white/80' }}">
-                <span class="material-symbols-outlined text-[var(--primary-color)]">menu_book</span>
-                <h6 class="font-bold text-[var(--primary-color)]">Knowledge</h6>
-            </a>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-center gap-3">
+        <div class="hidden items-center justify-center gap-3 lg:flex">
             <details class="group relative">
-                <summary
-                    class="list-none [&::-webkit-details-marker]:hidden flex h-12 w-12 items-center justify-center rounded-xl cursor-pointer transition hover:bg-[var(--blue-low-opacity)]">
+                <summary class="flex h-12 w-12 cursor-pointer list-none items-center justify-center rounded-xl transition hover:bg-[var(--blue-low-opacity)] [&::-webkit-details-marker]:hidden">
                     <span class="material-symbols-outlined text-[var(--primary-color)]">more_vert</span>
                 </summary>
 
@@ -56,40 +52,17 @@
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <a href="{{ route('satgas.profile.show') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('satgas.profile.*') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">account_circle</span>
-                            Profil Satgas
-                        </a>
-
-                        <a href="{{ route('satgas.incidents.create') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('satgas.incidents.create') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">note_add</span>
-                            Buat Laporan Insiden
-                        </a>
-
-                        <a href="{{ route('satgas.hazards.create') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('satgas.hazards.create') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">add_alert</span>
-                            Buat Hazard Report
-                        </a>
-
-                        <a href="{{ route('satgas.hazards.map') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('satgas.hazards.map') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">satellite_alt</span>
-                            Peta GIS Hazard
-                        </a>
-
-                        <a href="{{ route('satgas.knowledge-articles.create') }}"
-                            class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ request()->routeIs('satgas.knowledge-articles.create') ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
-                            <span class="material-symbols-outlined text-[var(--primary-color)]">edit_square</span>
-                            Tambah Materi
-                        </a>
+                        @foreach ($extraLinks as $link)
+                            <a href="{{ route($link['route']) }}"
+                                class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ $isActive($link['active']) ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
+                                <span class="material-symbols-outlined text-[var(--primary-color)]">{{ $link['icon'] }}</span>
+                                {{ $link['label'] }}
+                            </a>
+                        @endforeach
 
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
-                            <button type="submit"
-                                class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-rose-600 transition hover:bg-rose-50">
+                            <button type="submit" class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-rose-600 transition hover:bg-rose-50">
                                 <span class="material-symbols-outlined">logout</span>
                                 Keluar
                             </button>
@@ -98,16 +71,71 @@
                 </div>
             </details>
 
-            <span class="hidden h-13 w-px rounded-full bg-slate-300 sm:block"></span>
-            <a href="{{ route('satgas.profile.show') }}"
-                class="flex h-15 w-auto items-center gap-3 rounded-full bg-[var(--primary-color)] px-3 py-3 shadow-[0_15px_30px_rgba(10,77,179,0.24)]">
-                <span
-                    class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 font-bold text-white">{{ $initials !== '' ? $initials : 'S' }}</span>
+            <span class="h-13 w-px rounded-full bg-slate-300"></span>
+            <a href="{{ route('satgas.profile.show') }}" class="flex h-15 w-auto items-center gap-3 rounded-full bg-[var(--primary-color)] px-3 py-3 shadow-[0_15px_30px_rgba(10,77,179,0.24)]">
+                <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 font-bold text-white">{{ $initials !== '' ? $initials : 'S' }}</span>
                 <div class="text-left">
                     <h6 class="font-bold text-white">{{ $user->name }}</h6>
                     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">{{ $user->role?->name ?? 'Satgas' }}</p>
                 </div>
             </a>
+        </div>
+
+        <button type="button"
+            id="satgas-mobile-menu-toggle"
+            class="flex h-11 w-11 items-center justify-center rounded-xl text-[var(--primary-color)] transition hover:bg-[var(--blue-low-opacity)] lg:hidden"
+            aria-controls="satgas-mobile-menu-panel"
+            aria-expanded="false"
+            aria-label="Buka menu satgas">
+            <span id="satgas-mobile-menu-icon" class="material-symbols-outlined">menu</span>
+        </button>
+
+        <div id="satgas-mobile-menu-panel"
+            class="ambient-card hidden absolute overflow-y-auto rounded-3xl p-4 shadow-all ring-1 ring-slate-100 lg:hidden"
+            style="left: 0; right: 0; top: calc(100% + 0.75rem); max-height: calc(100vh - 5.5rem);">
+            <div class="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-[var(--primary-color)] px-4 py-3 text-white">
+                <div class="min-w-0">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">Satgas</p>
+                    <p class="mt-1 truncate text-sm font-bold">{{ $user->name }}</p>
+                </div>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold">{{ $initials !== '' ? $initials : 'S' }}</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="min-w-0">
+                    <p class="mb-2 px-4 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">Navigasi</p>
+                    <div class="flex flex-col gap-1.5">
+                        @foreach ($mainLinks as $link)
+                            <a href="{{ route($link['route']) }}"
+                                class="flex min-h-12 items-center gap-3 rounded-2xl px-4 py-2 text-xs font-bold leading-4 text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ $isActive($link['active']) ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : 'bg-white/70' }}">
+                                <span class="material-symbols-outlined shrink-0 text-[21px] text-[var(--primary-color)]">{{ $link['icon'] }}</span>
+                                <span class="min-w-0 break-words">{{ $link['label'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="min-w-0">
+                    <p class="mb-2 px-4 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">Aksi</p>
+                    <div class="flex flex-col gap-1.5">
+                        @foreach ($extraLinks as $link)
+                            <a href="{{ route($link['route']) }}"
+                                class="flex min-h-12 items-center gap-3 rounded-2xl bg-white/70 px-4 py-2 text-xs font-bold leading-4 text-slate-700 transition hover:bg-[var(--blue-low-opacity)] {{ $isActive($link['active']) ? 'bg-[var(--blue-low-opacity)] text-[var(--primary-color)]' : '' }}">
+                                <span class="material-symbols-outlined shrink-0 text-[21px] text-[var(--primary-color)]">{{ $link['icon'] }}</span>
+                                <span class="min-w-0 break-words">{{ $link['label'] }}</span>
+                            </a>
+                        @endforeach
+
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="flex min-h-12 w-full items-center gap-3 rounded-2xl bg-rose-50 px-4 py-2 text-left text-xs font-bold leading-4 text-rose-600 transition hover:bg-rose-100">
+                                <span class="material-symbols-outlined shrink-0 text-[21px]">logout</span>
+                                <span>Keluar</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 </div>
@@ -125,6 +153,30 @@
             let idleTimer = null;
             let isHidden = false;
 
+            const mobileToggle = document.getElementById('satgas-mobile-menu-toggle');
+            const mobilePanel = document.getElementById('satgas-mobile-menu-panel');
+            const mobileIcon = document.getElementById('satgas-mobile-menu-icon');
+
+            const mobileMenuIsOpen = () => mobilePanel ? !mobilePanel.classList.contains('hidden') : false;
+            const menuIsOpen = () => mobileMenuIsOpen() || Array.from(navbar.querySelectorAll('details')).some((detail) => detail.open);
+
+            const setMobileMenuOpen = (isOpen) => {
+                if (!mobileToggle || !mobilePanel || !mobileIcon) {
+                    return;
+                }
+
+                mobilePanel.classList.toggle('hidden', !isOpen);
+                mobileIcon.textContent = isOpen ? 'close' : 'menu';
+                mobileToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+                if (isOpen) {
+                    navbar.querySelectorAll('details[open]').forEach((detail) => {
+                        detail.open = false;
+                    });
+                    showNavbar();
+                }
+            };
+
             const showNavbar = () => {
                 if (!isHidden) return;
                 navbar.classList.remove('-translate-y-[140%]', 'opacity-0');
@@ -133,7 +185,7 @@
             };
 
             const hideNavbar = () => {
-                if (isHidden) return;
+                if (isHidden || menuIsOpen()) return;
                 navbar.classList.remove('translate-y-0', 'opacity-100');
                 navbar.classList.add('-translate-y-[140%]', 'opacity-0');
                 isHidden = true;
@@ -151,7 +203,7 @@
                 const currentY = window.scrollY;
                 const delta = currentY - lastY;
 
-                if (currentY <= 32) {
+                if (currentY <= 32 || menuIsOpen()) {
                     showNavbar();
                     lastY = currentY;
                     armIdleReveal();
@@ -166,17 +218,51 @@
 
                 lastY = currentY;
                 armIdleReveal();
-            }, {
-                passive: true
+            }, { passive: true });
+
+            navbar.addEventListener('toggle', (event) => {
+                if (!(event.target instanceof HTMLDetailsElement) || !event.target.open) {
+                    return;
+                }
+
+                setMobileMenuOpen(false);
+                navbar.querySelectorAll('details').forEach((detail) => {
+                    if (detail !== event.target) {
+                        detail.open = false;
+                    }
+                });
+                showNavbar();
+            }, true);
+
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', () => {
+                    setMobileMenuOpen(!mobileMenuIsOpen());
+                    armIdleReveal();
+                });
+            }
+
+            document.addEventListener('click', (event) => {
+                if (navbar.contains(event.target)) {
+                    return;
+                }
+
+                setMobileMenuOpen(false);
+                navbar.querySelectorAll('details[open]').forEach((detail) => {
+                    detail.open = false;
+                });
+            });
+
+            navbar.querySelectorAll('#satgas-mobile-menu-panel a').forEach((link) => {
+                link.addEventListener('click', () => {
+                    setMobileMenuOpen(false);
+                });
             });
 
             ['mouseenter', 'focusin', 'touchstart'].forEach((eventName) => {
                 navbar.addEventListener(eventName, () => {
                     showNavbar();
                     armIdleReveal();
-                }, {
-                    passive: true
-                });
+                }, { passive: true });
             });
         })();
     </script>

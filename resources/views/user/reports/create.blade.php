@@ -37,12 +37,13 @@
         <div data-report-panel="incident" class="{{ $activeReportType === 'incident' ? '' : 'hidden' }}">
             @include('reports.partials.incident-form', [
                 'showInlineFlash' => true,
+                'isPublicIncidentForm' => true,
                 'formAction' => route('user.incidents.store'),
                 'submitLabel' => 'Kirim Laporan Insiden',
                 'cancelUrl' => route('user.dashboard'),
                 'panelEyebrow' => 'Form Pelaporan',
-                'panelTitle' => 'Susun laporan insiden dengan struktur yang lebih jelas',
-                'panelDescription' => 'Lengkapi identitas kejadian, uraian kronologi, dan bukti pendukung agar Satgas dapat melakukan verifikasi serta tindak lanjut dengan lebih cepat.',
+                'panelTitle' => 'Laporkan insiden dengan cepat',
+                'panelDescription' => 'Isi data inti kejadian, lokasi GPS, kronologi singkat, dan bukti pendukung. Detail investigasi akan dilengkapi Satgas saat review.',
                 'summaryTips' => [
                     ['label' => 'Pelapor', 'value' => 'Isi kontak aktif agar pembaruan status dapat dikirim.'],
                     ['label' => 'Lampiran', 'value' => 'Maksimal 3 file untuk memudahkan verifikasi awal.'],
@@ -50,9 +51,9 @@
                 ],
                 'sidebarEyebrow' => 'Panduan Singkat',
                 'sidebarTitle' => 'Agar laporan lebih cepat diproses',
-                'sidebarDescription' => 'Semakin jelas detail yang Anda isi, semakin cepat tim dapat memahami tingkat risiko dan menentukan tindak lanjut.',
+                'sidebarDescription' => 'Form ini dibuat singkat agar laporan bisa segera masuk. Satgas akan melengkapi klasifikasi, dampak, dan detail lokasi final saat verifikasi.',
                 'sidebarSteps' => [
-                    ['title' => 'Tulis lokasi yang spesifik', 'description' => 'Sebutkan gedung, ruang, atau titik kejadian sedetail mungkin.'],
+                    ['title' => 'Izinkan akses GPS', 'description' => 'Lokasi utama akan otomatis mengikuti area gedung yang terdeteksi.'],
                     ['title' => 'Jelaskan urutan kejadian', 'description' => 'Tuliskan kronologi singkat tapi runtut, mulai dari awal sampai kondisi terakhir.'],
                     ['title' => 'Lampirkan bukti yang relevan', 'description' => 'Foto alat, area, atau kondisi terkini akan sangat membantu proses review.'],
                 ],

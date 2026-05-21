@@ -23,8 +23,10 @@ class ActivityLogFeatureTest extends TestCase
         $user = $this->createMahasiswaUser();
         $satgas = $this->createSatgasUser();
         $category = IncidentCategory::query()->create(['name' => 'Unsafe Action']);
-        $injuryCategory = InjuryCategory::query()->create(['name' => 'Luka Memar']);
-        $bodyPart = BodyPart::query()->create(['name' => 'Kaki']);
+        $injuryCategory = InjuryCategory::query()->firstOrCreate(['name' => 'Memar / Kontusio']);
+        $abrasionCategory = InjuryCategory::query()->firstOrCreate(['name' => 'Luka Lecet / Abrasi']);
+        $bodyPart = BodyPart::query()->firstOrCreate(['name' => 'Lutut Kiri']);
+        $handPart = BodyPart::query()->firstOrCreate(['name' => 'Tangan Kanan']);
         $location = $this->createLocation();
 
         $this->actingAs($user)
@@ -34,6 +36,22 @@ class ActivityLogFeatureTest extends TestCase
                 'injury_category_id' => $injuryCategory->id,
                 'body_part_id' => $bodyPart->id,
                 'location_id' => $location->id,
+                'latitude' => '-6.8761000',
+                'longitude' => '107.6206300',
+                'location_accuracy' => '8.50',
+                'specific_location' => 'Lantai 2 dekat panel utama',
+                'injuries' => [
+                    [
+                        'injury_category_id' => $injuryCategory->id,
+                        'body_part_id' => $bodyPart->id,
+                        'description' => 'Memar pada lutut',
+                    ],
+                    [
+                        'injury_category_id' => $abrasionCategory->id,
+                        'body_part_id' => $handPart->id,
+                        'description' => 'Lecet ringan',
+                    ],
+                ],
                 'incident_date' => '2026-04-25',
                 'incident_time' => '09:00',
                 'severity_level' => 'medium',
@@ -63,14 +81,48 @@ class ActivityLogFeatureTest extends TestCase
 
         $this->assertSame('Rachmat Hidayat', $report->victim_name);
         $this->assertSame('Abdul Muhyi', $report->witness_name);
+        $this->assertSame('-6.8761000', (string) $report->latitude);
+        $this->assertSame('107.6206300', (string) $report->longitude);
+        $this->assertSame('8.50', (string) $report->location_accuracy);
+        $this->assertSame('Lantai 2 dekat panel utama', $report->specific_location);
+        $this->assertCount(2, $report->injuries);
         $this->assertSame(['area_kerja_berbahaya'], $report->unsafe_conditions);
         $this->assertSame(['pengamanan_sumber_bahaya', 'inspeksi_rutin'], $report->proposed_preventions);
+
+        $this->assertDatabaseHas('incident_injuries', [
+            'incident_report_id' => $report->id,
+            'injury_category_id' => $injuryCategory->id,
+            'body_part_id' => $bodyPart->id,
+            'description' => 'Memar pada lutut',
+        ]);
+
+        $this->assertDatabaseHas('incident_injuries', [
+            'incident_report_id' => $report->id,
+            'injury_category_id' => $abrasionCategory->id,
+            'body_part_id' => $handPart->id,
+            'description' => 'Lecet ringan',
+        ]);
 
         $this->actingAs($satgas)
             ->patch(route('satgas.incidents.verify', $report), [
                 'verification_note' => 'Laporan valid dan diteruskan ke tahap tindak lanjut.',
+                'verified_location_id' => $location->id,
+                'verified_specific_location' => 'Lantai 2 dekat panel utama setelah dicek Satgas',
+                'verified_latitude' => '-6.8761100',
+                'verified_longitude' => '107.6206400',
+                'verified_location_accuracy' => '4.25',
             ])
             ->assertRedirect(route('satgas.incidents.show', $report));
+
+        $report->refresh();
+
+        $this->assertSame($location->id, $report->verified_location_id);
+        $this->assertSame('Lantai 2 dekat panel utama setelah dicek Satgas', $report->verified_specific_location);
+        $this->assertSame('-6.8761100', (string) $report->verified_latitude);
+        $this->assertSame('107.6206400', (string) $report->verified_longitude);
+        $this->assertSame('4.25', (string) $report->verified_location_accuracy);
+        $this->assertSame($satgas->id, $report->location_verified_by);
+        $this->assertNotNull($report->location_verified_at);
 
         $this->assertDatabaseHas('activity_logs', [
             'user_id' => $user->id,

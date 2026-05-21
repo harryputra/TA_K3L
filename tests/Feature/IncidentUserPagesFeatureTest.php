@@ -27,6 +27,14 @@ class IncidentUserPagesFeatureTest extends TestCase
             ->assertSeeText('Form Pelaporan K3L')
             ->assertSeeText('Form Insiden')
             ->assertSeeText('Form Hazard')
+            ->assertSeeText('Koordinat GPS lokasi kejadian')
+            ->assertSeeText('Patokan lokasi')
+            ->assertSeeText('Catatan luka bila ada')
+            ->assertSeeText('Tambah luka')
+            ->assertSeeText('Cedera dan dampak')
+            ->assertSeeText('Data korban')
+            ->assertSeeText('Analisa awal kejadian')
+            ->assertDontSeeText('Usulan pencegahan')
             ->assertSee('data-report-panel="incident"', false)
             ->assertSee('data-report-panel="hazard"', false);
     }
@@ -99,6 +107,61 @@ class IncidentUserPagesFeatureTest extends TestCase
             ->assertSeeText('resolved');
     }
 
+    public function test_public_incident_status_page_displays_all_reports_and_can_search_by_whatsapp(): void
+    {
+        $firstUser = $this->createMahasiswaUser();
+        $secondUser = User::factory()->create([
+            'role_id' => $firstUser->role_id,
+            'is_active' => true,
+        ]);
+        $category = IncidentCategory::query()->create(['name' => 'Kecelakaan Kerja']);
+        $location = Location::query()->create([
+            'name' => 'Gedung Mekanik',
+            'code' => 'GM',
+            'is_active' => true,
+        ]);
+
+        IncidentReport::query()->create([
+            'report_number' => 'INC-PUB-001',
+            'reported_by' => $firstUser->id,
+            'reporter_whatsapp' => '081111111111',
+            'incident_category_id' => $category->id,
+            'location_id' => $location->id,
+            'incident_date' => '2026-04-25',
+            'incident_time' => '09:00:00',
+            'severity_level' => 'medium',
+            'title' => 'Tangan tergores alat kerja',
+            'chronology' => 'Pelapor melihat tangan tergores alat kerja.',
+            'status' => 'submitted',
+            'submitted_at' => now(),
+        ]);
+
+        IncidentReport::query()->create([
+            'report_number' => 'INC-PUB-002',
+            'reported_by' => $secondUser->id,
+            'reporter_whatsapp' => '082222222222',
+            'incident_category_id' => $category->id,
+            'location_id' => $location->id,
+            'incident_date' => '2026-04-26',
+            'incident_time' => '10:00:00',
+            'severity_level' => 'low',
+            'title' => 'Near miss area mesin',
+            'chronology' => 'Pelapor menemukan near miss di area mesin.',
+            'status' => 'verified',
+            'submitted_at' => now(),
+        ]);
+
+        $this->get(route('user.incidents.status'))
+            ->assertOk()
+            ->assertSeeText('Tangan tergores alat kerja')
+            ->assertSeeText('Near miss area mesin');
+
+        $this->get(route('user.incidents.status', ['q' => '082222222222']))
+            ->assertOk()
+            ->assertSeeText('Near miss area mesin')
+            ->assertDontSeeText('Tangan tergores alat kerja');
+    }
+
     public function test_incident_detail_page_displays_follow_ups(): void
     {
         $user = $this->createMahasiswaUser();
@@ -107,7 +170,7 @@ class IncidentUserPagesFeatureTest extends TestCase
             'role_id' => $satgasRole->id,
             'is_active' => true,
         ]);
-        $category = IncidentCategory::query()->create(['name' => 'Near Miss']);
+        $category = IncidentCategory::query()->firstOrCreate(['name' => 'Near Miss']);
         $injuryCategory = InjuryCategory::query()->create(['name' => 'Luka Memar']);
         $bodyPart = BodyPart::query()->create(['name' => 'Kaki']);
         $location = Location::query()->create([

@@ -100,7 +100,7 @@
                                         class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
                                         <option value="">Pilih lokasi</option>
                                         @foreach ($locations as $location)
-                                            <option value="{{ $location->id }}" @selected(old('location_id') == $location->id)>{{ $location->name }}</option>
+                                            <option value="{{ $location->id }}" data-location-name="{{ $location->name }}" @selected(old('location_id') == $location->id)>{{ $location->name }}</option>
                                         @endforeach
                                     </select>
                                     @error('location_id')
@@ -108,11 +108,55 @@
                                     @enderror
                                 </div>
 
+                                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4" data-hazard-gps>
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p class="text-sm font-bold text-slate-800">Koordinat GPS hazard</p>
+                                            <p class="mt-1 text-xs leading-5 text-slate-500" data-hazard-gps-status>
+                                                GPS wajib berada di area Polman.
+                                            </p>
+                                        </div>
+                                        <button type="button" data-hazard-gps-button
+                                            class="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--primary-color)]/15 bg-white px-4 py-2 text-xs font-bold text-[var(--primary-color)] transition hover:bg-[var(--blue-low-opacity)]">
+                                            <span class="material-symbols-outlined text-base" data-hazard-gps-icon>my_location</span>
+                                            <span data-hazard-gps-label>Ambil lokasi</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                                        <div>
+                                            <label for="hazard-latitude" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Latitude</label>
+                                            <input id="hazard-latitude" name="latitude" type="text" value="{{ old('latitude') }}" required readonly
+                                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none">
+                                            @error('latitude')
+                                                <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                        <div>
+                                            <label for="hazard-longitude" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Longitude</label>
+                                            <input id="hazard-longitude" name="longitude" type="text" value="{{ old('longitude') }}" required readonly
+                                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none">
+                                            @error('longitude')
+                                                <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                        <div>
+                                            <label for="hazard-location-accuracy" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Akurasi meter</label>
+                                            <input id="hazard-location-accuracy" name="location_accuracy" type="text" value="{{ old('location_accuracy') }}" readonly
+                                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none">
+                                            @error('location_accuracy')
+                                                <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <label for="specific_location" class="mb-2 block text-sm font-bold text-slate-700">Titik spesifik</label>
-                                    <input id="specific_location" name="specific_location" type="text" value="{{ old('specific_location') }}"
-                                        placeholder="Contoh: Lantai 2, dekat panel utama"
+                                    <label for="hazard-specific-location" class="mb-2 block text-sm font-bold text-slate-700">Detail lokasi hazard</label>
+                                    <input id="hazard-specific-location" name="specific_location" type="text" value="{{ old('specific_location') }}" required
+                                        placeholder="Contoh: lantai 2 dekat panel utama, sisi utara mesin CNC"
                                         class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-color)] focus:bg-white focus:ring-4 focus:ring-[var(--primary-color)]/10">
+                                    <p class="mt-2 text-xs leading-5 text-slate-500">Isi patokan spesifik agar Satgas mudah menemukan titik bahaya.</p>
                                     @error('specific_location')
                                         <p class="mt-2 text-sm font-medium text-rose-600">{{ $message }}</p>
                                     @enderror
@@ -282,6 +326,159 @@
             };
 
             input.addEventListener('change', renderFiles);
+        })();
+
+        (() => {
+            const form = document.querySelector('[data-report-form="hazard"]');
+            const gpsPanel = form?.querySelector('[data-hazard-gps]');
+            const button = gpsPanel?.querySelector('[data-hazard-gps-button]');
+            const icon = gpsPanel?.querySelector('[data-hazard-gps-icon]');
+            const label = gpsPanel?.querySelector('[data-hazard-gps-label]');
+            const status = gpsPanel?.querySelector('[data-hazard-gps-status]');
+            const latitudeInput = gpsPanel?.querySelector('#hazard-latitude');
+            const longitudeInput = gpsPanel?.querySelector('#hazard-longitude');
+            const accuracyInput = gpsPanel?.querySelector('#hazard-location-accuracy');
+            const locationSelect = form?.querySelector('#hazard-location');
+            const campusBuildings = @json($campusBuildingPolygons ?? []);
+            const campusBoundary = @json($campusBoundaryPolygon ?? []);
+
+            if (!gpsPanel || !button || !latitudeInput || !longitudeInput || !accuracyInput || !status) {
+                return;
+            }
+
+            const setButtonState = (isLoading) => {
+                button.disabled = isLoading;
+                button.classList.toggle('opacity-60', isLoading);
+                button.classList.toggle('cursor-wait', isLoading);
+
+                if (icon) {
+                    icon.textContent = isLoading ? 'progress_activity' : 'my_location';
+                }
+                if (label) {
+                    label.textContent = isLoading ? 'Mengambil...' : 'Ambil lokasi';
+                }
+            };
+
+            const normalize = (value) => String(value || '')
+                .toLowerCase()
+                .replace(/&/g, 'dan')
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+
+            const isPointInsidePolygon = ([lat, lng], polygon) => {
+                let inside = false;
+
+                for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                    const [latI, lngI] = polygon[i];
+                    const [latJ, lngJ] = polygon[j];
+                    const intersects = ((lngI > lng) !== (lngJ > lng))
+                        && (lat < ((latJ - latI) * (lng - lngI)) / (lngJ - lngI) + latI);
+
+                    if (intersects) {
+                        inside = !inside;
+                    }
+                }
+
+                return inside;
+            };
+
+            const buildingAt = (lat, lng) => campusBuildings.find((building) => (
+                Array.isArray(building.coordinates) && isPointInsidePolygon([lat, lng], building.coordinates)
+            ));
+
+            const selectLocationByName = (name) => {
+                if (!locationSelect) {
+                    return false;
+                }
+
+                const targetName = normalize(name);
+                const option = Array.from(locationSelect.options).find((item) => (
+                    normalize(item.dataset.locationName || item.textContent) === targetName
+                ));
+
+                if (!option) {
+                    return false;
+                }
+
+                locationSelect.value = option.value;
+                locationSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                return true;
+            };
+
+            const clearCoordinates = (message) => {
+                latitudeInput.value = '';
+                longitudeInput.value = '';
+                accuracyInput.value = '';
+                latitudeInput.setCustomValidity(message);
+                longitudeInput.setCustomValidity(message);
+                status.textContent = message;
+            };
+
+            const applyDetectedLocation = (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const isInsidePolman = isPointInsidePolygon([lat, lng], campusBoundary);
+
+                if (!isInsidePolman) {
+                    clearCoordinates('Koordinat hazard berada di luar area Polman. Ambil GPS dari area kampus.');
+                    return;
+                }
+
+                latitudeInput.setCustomValidity('');
+                longitudeInput.setCustomValidity('');
+                latitudeInput.value = lat.toFixed(7);
+                longitudeInput.value = lng.toFixed(7);
+                accuracyInput.value = Number(position.coords.accuracy || 0).toFixed(2);
+
+                const detected = buildingAt(lat, lng);
+                if (detected && selectLocationByName(detected.name)) {
+                    status.textContent = `Koordinat masuk area Polman dan terdeteksi di ${detected.name}.`;
+                    return;
+                }
+
+                status.textContent = 'Koordinat masuk area Polman. Pilih lokasi utama yang paling dekat, lalu isi detail lokasi hazard.';
+            };
+
+            const captureLocation = () => {
+                if (!navigator.geolocation) {
+                    clearCoordinates('Browser ini belum mendukung GPS. Gunakan browser lain untuk mengirim hazard.');
+                    button.disabled = true;
+                    button.classList.add('opacity-50', 'cursor-not-allowed');
+                    return;
+                }
+
+                setButtonState(true);
+                status.textContent = 'Meminta izin lokasi dan membaca koordinat GPS...';
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        applyDetectedLocation(position);
+                        setButtonState(false);
+                    },
+                    () => {
+                        clearCoordinates('Koordinat belum terisi. Izinkan akses lokasi lalu tekan Ambil lokasi.');
+                        setButtonState(false);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 12000,
+                        maximumAge: 30000,
+                    },
+                );
+            };
+
+            button.addEventListener('click', captureLocation);
+            form?.addEventListener('submit', (event) => {
+                if (!latitudeInput.value || !longitudeInput.value) {
+                    event.preventDefault();
+                    clearCoordinates('Koordinat GPS hazard wajib diambil dan harus berada di area Polman.');
+                    latitudeInput.reportValidity();
+                }
+            });
+
+            if (latitudeInput.value.trim() === '' || longitudeInput.value.trim() === '') {
+                captureLocation();
+            }
         })();
 
         (() => {

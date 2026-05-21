@@ -58,36 +58,36 @@ class IncidentReportController extends Controller
         $selectedQuery = trim((string) $request->string('q'));
         $selectedStatus = trim((string) $request->string('status'));
 
-        $reports = IncidentReport::query()
+        $baseQuery = IncidentReport::query()
             ->with(['category', 'location'])
             ->when($selectedQuery !== '', function ($query) use ($selectedQuery) {
                 $query->where(function ($subQuery) use ($selectedQuery) {
                     $subQuery
                         ->where('report_number', 'like', '%' . $selectedQuery . '%')
                         ->orWhere('reporter_email', 'like', '%' . $selectedQuery . '%')
-                        ->orWhere('reporter_whatsapp', 'like', '%' . $selectedQuery . '%');
+                        ->orWhere('reporter_whatsapp', 'like', '%' . $selectedQuery . '%')
+                        ->orWhere('reporter_name', 'like', '%' . $selectedQuery . '%')
+                        ->orWhere('victim_name', 'like', '%' . $selectedQuery . '%')
+                        ->orWhere('title', 'like', '%' . $selectedQuery . '%')
+                        ->orWhereHas('category', fn ($categoryQuery) => $categoryQuery->where('name', 'like', '%' . $selectedQuery . '%'))
+                        ->orWhereHas('location', fn ($locationQuery) => $locationQuery->where('name', 'like', '%' . $selectedQuery . '%'));
                 });
             })
-            ->when($selectedStatus !== '', fn ($query) => $query->where('status', $selectedStatus))
-            ->when(
-                $selectedQuery === '' && $selectedStatus === '',
-                fn ($query) => $request->user()
-                    ? $query->where('reported_by', $request->user()->id)
-                    : $query->whereRaw('1 = 0'),
-            )
-            ->latest()
-            ->get();
+            ->when($selectedStatus !== '', fn ($query) => $query->where('status', $selectedStatus));
 
-        $filteredReports = $reports->values();
+        $reports = (clone $baseQuery)
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
 
         $statusCounts = collect([
-            'draft' => $reports->where('status', 'draft')->count(),
-            'submitted' => $reports->where('status', 'submitted')->count(),
-            'verified' => $reports->where('status', 'verified')->count(),
-            'investigating' => $reports->where('status', 'investigating')->count(),
-            'resolved' => $reports->where('status', 'resolved')->count(),
-            'closed' => $reports->where('status', 'closed')->count(),
-            'rejected' => $reports->where('status', 'rejected')->count(),
+            'draft' => (clone $baseQuery)->where('status', 'draft')->count(),
+            'submitted' => (clone $baseQuery)->where('status', 'submitted')->count(),
+            'verified' => (clone $baseQuery)->where('status', 'verified')->count(),
+            'investigating' => (clone $baseQuery)->where('status', 'investigating')->count(),
+            'resolved' => (clone $baseQuery)->where('status', 'resolved')->count(),
+            'closed' => (clone $baseQuery)->where('status', 'closed')->count(),
+            'rejected' => (clone $baseQuery)->where('status', 'rejected')->count(),
         ]);
 
         $statusBoard = [
@@ -128,7 +128,7 @@ class IncidentReportController extends Controller
             ],
         ];
 
-        $recentStatusReports = $filteredReports->take(6);
+        $recentStatusReports = $reports;
 
         return view('user.incidents.status', compact(
             'reports',
@@ -154,6 +154,8 @@ class IncidentReportController extends Controller
             'category',
             'injuryCategory',
             'bodyPart',
+            'injuries.injuryCategory',
+            'injuries.bodyPart',
             'location',
             'reporter',
             'victim',

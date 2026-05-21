@@ -21,7 +21,7 @@
             <span class="inline-flex rounded-full border border-white/20 bg-white/12 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/90">Portal Operasional K3L</span>
             <h1 class="mt-6 text-center text-5xl font-bold text-white lg:text-7xl">Status Pelaporan</h1>
             <p class="max-w-6xl px-4 pt-2 text-center text-lg text-white/90 lg:text-2xl">
-                Masukkan nomor laporan, email, atau nomor WhatsApp pelapor untuk melihat perkembangan verifikasi dan tindak lanjut.
+                Lihat informasi status laporan terbaru atau cari berdasarkan nomor laporan, WhatsApp, nama, kategori, dan lokasi kejadian.
             </p>
         </div>
     </header>
@@ -34,7 +34,7 @@
                         <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">Papan Status</p>
                         <h2 class="mt-2 text-3xl font-bold text-slate-900">Cek posisi laporan secara cepat</h2>
                         <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                            Pencarian status hanya menampilkan laporan yang cocok dengan nomor laporan atau kontak pelapor yang dimasukkan.
+                            Halaman ini bersifat umum untuk memantau status laporan. Gunakan pencarian bila ingin menemukan laporan tertentu dengan cepat.
                         </p>
                     </div>
                     <a href="{{ route('user.incidents.create') }}"
@@ -49,7 +49,7 @@
                     <label class="block">
                         <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Cari Laporan</span>
                         <input type="search" name="q" value="{{ $selectedQuery ?? '' }}"
-                            placeholder="No laporan, email, atau no WhatsApp"
+                            placeholder="No laporan, WhatsApp, nama, kategori, atau lokasi"
                             class="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-[var(--primary-color)]">
                     </label>
                     <label class="block">
@@ -87,13 +87,13 @@
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">Ringkasan Progress</p>
                             <h2 class="mt-2 text-2xl font-bold text-slate-900">Distribusi status laporan</h2>
                         </div>
-                        <span class="text-sm font-semibold text-slate-500">{{ $reports->count() }} total laporan</span>
+                        <span class="text-sm font-semibold text-slate-500">{{ $reports->total() }} total laporan</span>
                     </div>
 
                     <div class="mt-6 space-y-5">
                         @foreach ($statusBoard as $item)
                             @php
-                                $totalReports = max($reports->count(), 1);
+                                $totalReports = max($reports->total(), 1);
                                 $percentage = min(100, (int) round(($item['count'] / $totalReports) * 100));
                             @endphp
                             <div class="space-y-2">
@@ -116,7 +116,7 @@
                     <div class="flex items-center justify-between border-b border-slate-200 pb-4">
                         <div>
                             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">Update Terbaru</p>
-                            <h2 class="mt-2 text-2xl font-bold text-slate-900">Hasil pencarian laporan</h2>
+                            <h2 class="mt-2 text-2xl font-bold text-slate-900">Laporan terbaru</h2>
                         </div>
                         @if (filled($selectedQuery ?? null) || filled($selectedStatus ?? null))
                             <a href="{{ route('user.incidents.status') }}" class="text-sm font-semibold text-[var(--primary-color)]">
@@ -148,6 +148,12 @@
                             </div>
                         @endforelse
                     </div>
+
+                    @if ($reports->hasPages())
+                        <div class="mt-6 border-t border-slate-200 pt-4">
+                            {{ $reports->links() }}
+                        </div>
+                    @endif
                 </div>
             </section>
         </div>
