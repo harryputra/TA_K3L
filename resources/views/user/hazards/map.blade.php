@@ -311,23 +311,76 @@
 
                 layer.innerHTML = '';
 
-                    markerData
-                        .filter((marker) => (marker.building_key || 'gedung-teori') === buildingKey && Number(marker.floor || 2) === floor)
-                        .forEach((marker) => {
-                    const color = colors[marker.risk_level] || '#0a4db3';
-                    const pin = document.createElement('button');
-                    pin.type = 'button';
-                    pin.className = 'pointer-events-auto absolute z-30 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_10px_24px_rgba(15,23,42,.35)] transition hover:scale-125 focus:scale-125 focus:outline-none focus:ring-4 focus:ring-sky-200';
-                    pin.style.left = `${(Number(marker.x) / width) * 100}%`;
-                    pin.style.top = `${(Number(marker.y) / height) * 100}%`;
-                    pin.style.background = color;
-                    pin.title = `${marker.title} - Risiko: ${marker.risk_level}`;
-                    pin.setAttribute('aria-label', pin.title);
-                    pin.addEventListener('click', () => {
-                        alert(`${marker.title}\n${marker.location}\nRisiko: ${marker.risk_level}\nStatus: ${marker.status}`);
+                    // Filter markers for this floorplan
+                    const filteredMarkers = markerData
+                        .filter((marker) => (marker.building_key || 'gedung-teori') === buildingKey && Number(marker.floor || 2) === floor);
+
+                    // Group markers by location (with tolerance for rounding)
+                    const markersByLocation = {};
+                    const tolerance = 5; // pixels
+                    
+                    filteredMarkers.forEach((marker) => {
+                        const x = Math.round(Number(marker.x) / tolerance) * tolerance;
+                        const y = Math.round(Number(marker.y) / tolerance) * tolerance;
+                        const key = `${x},${y}`;
+                        
+                        if (!markersByLocation[key]) {
+                            markersByLocation[key] = [];
+                        }
+                        markersByLocation[key].push(marker);
                     });
-                    layer.appendChild(pin);
-                });
+
+                    // Render grouped markers
+                    Object.entries(markersByLocation).forEach(([locationKey, markers]) => {
+                        const marker = markers[0];
+                        const count = markers.length;
+                        
+                        if (count > 1) {
+                            // Multiple markers at same location - show count indicator
+                            const pin = document.createElement('button');
+                            pin.type = 'button';
+                            pin.className = 'pointer-events-auto absolute z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_10px_24px_rgba(15,23,42,.35)] transition hover:scale-125 focus:scale-125 focus:outline-none focus:ring-4 focus:ring-sky-200';
+                            pin.style.width = '32px';
+                            pin.style.height = '32px';
+                            pin.style.background = '#d93f33';
+                            pin.style.color = 'white';
+                            pin.style.fontSize = '14px';
+                            pin.style.fontWeight = '800';
+                            pin.style.display = 'flex';
+                            pin.style.alignItems = 'center';
+                            pin.style.justifyContent = 'center';
+                            pin.textContent = count;
+                            pin.title = `${count} hazard pada lokasi ini`;
+                            pin.setAttribute('aria-label', `${count} hazard pada lokasi ini`);
+                            pin.style.left = `${(Number(marker.x) / width) * 100}%`;
+                            pin.style.top = `${(Number(marker.y) / height) * 100}%`;
+                            
+                            // Show details of all markers at this location
+                            pin.addEventListener('click', () => {
+                                const details = markers.map(m => {
+                                    return `${m.title}\n${m.location}\nRisiko: ${m.risk_level}\nStatus: ${m.status}`;
+                                }).join('\n\n---\n\n');
+                                alert(`${count} Hazard pada lokasi ini:\n\n${details}`);
+                            });
+                            
+                            layer.appendChild(pin);
+                        } else {
+                            // Single marker - show regular pin
+                            const color = colors[marker.risk_level] || '#0a4db3';
+                            const pin = document.createElement('button');
+                            pin.type = 'button';
+                            pin.className = 'pointer-events-auto absolute z-30 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_10px_24px_rgba(15,23,42,.35)] transition hover:scale-125 focus:scale-125 focus:outline-none focus:ring-4 focus:ring-sky-200';
+                            pin.style.left = `${(Number(marker.x) / width) * 100}%`;
+                            pin.style.top = `${(Number(marker.y) / height) * 100}%`;
+                            pin.style.background = color;
+                            pin.title = `${marker.title} - Risiko: ${marker.risk_level}`;
+                            pin.setAttribute('aria-label', pin.title);
+                            pin.addEventListener('click', () => {
+                                alert(`${marker.title}\n${marker.location}\nRisiko: ${marker.risk_level}\nStatus: ${marker.status}`);
+                            });
+                            layer.appendChild(pin);
+                        }
+                    });
                 });
             };
 

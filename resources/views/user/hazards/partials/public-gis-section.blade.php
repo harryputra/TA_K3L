@@ -1,5 +1,5 @@
 @php
-    $riskBadge = fn (?string $risk): string => match ($risk) {
+    $riskBadge = fn(?string $risk): string => match ($risk) {
         'rendah' => 'bg-emerald-100 text-emerald-800',
         'sedang' => 'bg-amber-100 text-amber-800',
         'tinggi' => 'bg-orange-100 text-orange-800',
@@ -32,40 +32,48 @@
                     <h2 class="mt-3 text-4xl font-bold text-[var(--primary-color)] lg:text-5xl">Peta Titik Rawan & Insiden</h2>
                 </div>
                 <div class="inline-flex rounded-full bg-[var(--blue-low-opacity)] p-1">
-                    <button type="button" data-public-gis-mode="hazard" class="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-[var(--primary-color)] shadow-sm">
+                    <button type="button" data-public-gis-mode="hazard"
+                        class="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-[var(--primary-color)] shadow-sm">
                         <span class="material-symbols-outlined text-[20px]">warning</span>
                         Titik Rawan
                     </button>
-                    <button type="button" data-public-gis-mode="incident" class="inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-bold text-slate-600">
+                    <button type="button" data-public-gis-mode="incident"
+                        class="inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-bold text-slate-600">
                         <span class="material-symbols-outlined text-[20px]">emergency_home</span>
                         Titik Insiden
                     </button>
                 </div>
             </div>
             <p class="mt-4 max-w-4xl text-base font-semibold leading-8 text-slate-600">
-                Pilih tampilan titik rawan atau titik insiden untuk melihat persebaran lokasi kejadian pada citra satelit area Kampus Polman Bandung.
+                Pilih tampilan titik rawan atau titik insiden untuk melihat persebaran lokasi kejadian pada citra
+                satelit area Kampus Polman Bandung.
             </p>
         </div>
 
         <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             <article class="rounded-[1.25rem] bg-white px-5 py-5 shadow-[0_16px_35px_rgba(15,23,42,0.08)] ring-1 ring-slate-200">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total Titik</p>
-                <p id="public-gis-total-count" class="mt-2 text-3xl font-bold text-[var(--primary-color)]">{{ $hazardMapCounts['total'] }}</p>
+                <p id="public-gis-total-count" class="mt-2 text-3xl font-bold text-[var(--primary-color)]">
+                    {{ $hazardMapCounts['total'] }}</p>
             </article>
             <article class="rounded-[1.25rem] bg-white px-5 py-5 shadow-[0_16px_35px_rgba(15,23,42,0.08)] ring-1 ring-slate-200">
                 <p id="public-gis-high-label" class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Risiko Tinggi</p>
-                <p id="public-gis-high-count" class="mt-2 text-3xl font-bold text-orange-600">{{ $hazardMapCounts['high'] }}</p>
+                <p id="public-gis-high-count" class="mt-2 text-3xl font-bold text-orange-600">
+                    {{ $hazardMapCounts['high'] }}</p>
             </article>
             <article class="rounded-[1.25rem] bg-white px-5 py-5 shadow-[0_16px_35px_rgba(15,23,42,0.08)] ring-1 ring-slate-200">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Belum Selesai</p>
-                <p id="public-gis-active-count" class="mt-2 text-3xl font-bold text-rose-600">{{ $hazardMapCounts['active'] }}</p>
+                <p id="public-gis-active-count" class="mt-2 text-3xl font-bold text-rose-600">
+                    {{ $hazardMapCounts['active'] }}</p>
             </article>
         </div>
     </div>
 
     <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div class="relative overflow-hidden rounded-[1.45rem] bg-white shadow-[0_22px_55px_rgba(15,23,42,0.14)] ring-1 ring-slate-200">
-            <div id="public-gis-position-status" class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-1 ring-slate-200" style="z-index: 500; max-width: calc(100% - 2rem);">
+            <div id="public-gis-position-status"
+                class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-1 ring-slate-200"
+                style="z-index: 500; max-width: calc(100% - 2rem);">
                 <span class="material-symbols-outlined text-[18px] text-[var(--primary-color)]">my_location</span>
                 Mengaktifkan tracking GPS...
             </div>
@@ -97,13 +105,14 @@
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <span id="public-gps-building-status" class="text-sm font-semibold text-slate-500">{{ $floorplanMarkers->count() }} titik</span>
-                <button id="public-use-gps-button" type="button" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[var(--primary-color)] px-4 text-sm font-bold text-white transition hover:bg-[var(--primary-deep)]">
+                <button id="public-use-gps-button" type="button"
+                    class="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[var(--primary-color)] px-4 text-sm font-bold text-white transition hover:bg-[var(--primary-deep)]">
                     <span class="material-symbols-outlined text-[20px]">my_location</span>
                     Gunakan GPS
                 </button>
             </div>
         </div>
-        @include('partials.floorplan-building-viewer', ['id' => 'public-floorplan-viewer'])
+        @include('partials.floorplan-building-viewer', ['id' => 'public-floorplan-viewer', 'mode' => 'hazard'])
     </section>
 </section>
 
@@ -111,6 +120,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         (() => {
+            // ============ DEKLARASI VARIABEL ============
             const mapElement = document.getElementById('public-hazard-map');
             const floorplanViewer = document.getElementById('public-floorplan-viewer');
             const gpsButton = document.getElementById('public-use-gps-button');
@@ -124,6 +134,8 @@
             const gisHighLabel = document.getElementById('public-gis-high-label');
             const gisHighCount = document.getElementById('public-gis-high-count');
             const gisActiveCount = document.getElementById('public-gis-active-count');
+            
+            // Data dari PHP
             const hazardMarkers = @json($hazardMarkers);
             const incidentMarkers = @json($incidentMarkers);
             const gisSummaries = {
@@ -151,7 +163,7 @@
                 [-6.876380476009756, 107.62023296539644],
                 [-6.876790564781358, 107.62022760097899],
                 [-6.876827845561228, 107.6201042193779],
-                [-6.8768225197357085, 107.62013104146509],
+                [-6.876822519735708, 107.62013104146509],
                 [-6.877152720804798, 107.62017932122203],
                 [-6.877158046626614, 107.61985209175822],
                 [-6.877152720804798, 107.61984672734077],
@@ -161,6 +173,7 @@
                 return;
             }
 
+            // ============ VARIABEL GLOBAL ============
             const colors = {
                 rendah: '#159947',
                 sedang: '#e7aa14',
@@ -172,6 +185,12 @@
                 critical: '#d93f33',
             };
 
+            let currentGisMode = 'hazard';
+            let map = null;
+            let bounds = [];
+            let markerLayer = null;
+
+            // ============ FUNGSI UTILITY ============
             const createIcon = (riskLevel, size = 22) => {
                 const color = colors[riskLevel] || '#0a4db3';
                 return L.divIcon({
@@ -204,36 +223,26 @@
 
             const isPointInsidePolygon = ([lat, lng], polygon) => {
                 let inside = false;
-
                 for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
                     const [latI, lngI] = polygon[i];
                     const [latJ, lngJ] = polygon[j];
-                    const intersects = ((lngI > lng) !== (lngJ > lng))
-                        && (lat < ((latJ - latI) * (lng - lngI)) / (lngJ - lngI) + latI);
-
-                    if (intersects) {
-                        inside = !inside;
-                    }
+                    const intersects = ((lngI > lng) !== (lngJ > lng)) &&
+                        (lat < ((latJ - latI) * (lng - lngI)) / (lngJ - lngI) + latI);
+                    if (intersects) inside = !inside;
                 }
-
                 return inside;
             };
 
             const setPositionStatus = (message, tone = 'waiting') => {
-                if (!positionStatus) {
-                    return;
-                }
-
-                const color = tone === 'inside'
-                    ? '#159947'
-                    : (tone === 'outside' || tone === 'error' ? '#d93f33' : 'var(--primary-color)');
-
+                if (!positionStatus) return;
+                const color = tone === 'inside' ? '#159947' : (tone === 'outside' || tone === 'error' ? '#d93f33' : 'var(--primary-color)');
                 positionStatus.innerHTML = `
                     <span class="material-symbols-outlined text-[18px]" style="color:${color};">my_location</span>
                     <span>${escapeHtml(message)}</span>
                 `;
             };
 
+            // ============ KONFIGURASI MODE ============
             const modeConfig = {
                 hazard: {
                     markers: hazardMarkers,
@@ -263,31 +272,21 @@
 
             const badgeClass = (mode, marker) => {
                 const key = marker[modeConfig[mode].badgeKey];
-
                 if (['kritis', 'critical'].includes(key)) return 'bg-rose-100 text-rose-800';
                 if (['tinggi', 'high'].includes(key)) return 'bg-orange-100 text-orange-800';
                 if (['sedang', 'medium'].includes(key)) return 'bg-amber-100 text-amber-800';
                 if (['rendah', 'low'].includes(key)) return 'bg-emerald-100 text-emerald-800';
-
                 return 'bg-slate-100 text-slate-700';
             };
 
+            // ============ FUNGSI RENDER GIS LIST ============
             const renderGisList = (mode) => {
-                if (!gisList) {
-                    return;
-                }
-
+                if (!gisList) return;
                 const config = modeConfig[mode];
-
                 if (config.markers.length === 0) {
-                    gisList.innerHTML = `
-                        <div class="rounded-[1.1rem] bg-slate-50 px-4 py-6 text-sm leading-7 text-slate-500">
-                            ${config.empty}
-                        </div>
-                    `;
+                    gisList.innerHTML = `<div class="rounded-[1.1rem] bg-slate-50 px-4 py-6 text-sm leading-7 text-slate-500">${config.empty}</div>`;
                     return;
                 }
-
                 gisList.innerHTML = config.markers.map((marker) => `
                     <article class="rounded-[1.1rem] bg-[#f8fbff] p-4 ring-1 ring-slate-200">
                         <div class="flex items-start justify-between gap-3">
@@ -307,7 +306,6 @@
             const updateGisSummary = (mode) => {
                 const summary = gisSummaries[mode] || { total: 0, high: 0, active: 0 };
                 const config = modeConfig[mode];
-
                 if (gisTotalCount) gisTotalCount.textContent = summary.total;
                 if (gisHighCount) gisHighCount.textContent = summary.high;
                 if (gisActiveCount) gisActiveCount.textContent = summary.active;
@@ -319,13 +317,14 @@
             const updateGisButtons = (mode) => {
                 gisModeButtons.forEach((button) => {
                     const isActive = button.dataset.publicGisMode === mode;
-                    button.className = isActive
-                        ? 'inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-[var(--primary-color)] shadow-sm'
-                        : 'inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-bold text-slate-600';
+                    button.className = isActive ?
+                        'inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-[var(--primary-color)] shadow-sm' :
+                        'inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-bold text-slate-600';
                     button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
                 });
             };
 
+            // ============ FUNGSI MAP ============
             const addCampusBuildings = (map, bounds) => {
                 campusBuildings.forEach((building) => {
                     const polygon = L.polygon(building.coordinates, {
@@ -335,7 +334,6 @@
                         opacity: 0.95,
                         weight: 3,
                     }).addTo(map);
-
                     polygon.bindPopup(`<strong>${building.name}</strong><br>Area gedung kampus`);
                     building.coordinates.forEach((coordinate) => bounds.push(coordinate));
                 });
@@ -343,7 +341,6 @@
 
             const addBuildingLegend = (map) => {
                 const legend = L.control({ position: 'bottomleft' });
-
                 legend.onAdd = () => {
                     const container = L.DomUtil.create('div', 'campus-building-legend');
                     container.style.background = 'rgba(255,255,255,.94)';
@@ -365,13 +362,147 @@
                     L.DomEvent.disableClickPropagation(container);
                     return container;
                 };
-
                 legend.addTo(map);
             };
 
+            // ============ FUNGSI FLOORPLAN ============
+            const renderFloorplanMarkers = (viewer, markerData) => {
+                const floorplans = viewer?.querySelectorAll('.floorplan-html') ?? [];
+                floorplans.forEach((floorplan) => {
+                    const layer = floorplan?.querySelector('.floorplan-marker-layer');
+                    const width = Number(floorplan?.dataset.floorplanWidth || 4080);
+                    const height = Number(floorplan?.dataset.floorplanHeight || 3060);
+                    const buildingKey = floorplan?.dataset.buildingKey || 'gedung-teori';
+                    const floor = Number(floorplan?.dataset.floor || 2);
+                    if (!layer) return;
+                    layer.innerHTML = '';
+                    const filteredMarkers = markerData
+                        .filter((marker) => (marker.building_key || 'gedung-teori') === buildingKey && Number(marker.floor || 2) === floor);
+                    const markersByLocation = {};
+                    const tolerance = 5;
+                    filteredMarkers.forEach((marker) => {
+                        const x = Math.round(Number(marker.x) / tolerance) * tolerance;
+                        const y = Math.round(Number(marker.y) / tolerance) * tolerance;
+                        const key = `${x},${y}`;
+                        if (!markersByLocation[key]) markersByLocation[key] = [];
+                        markersByLocation[key].push(marker);
+                    });
+                    Object.values(markersByLocation).forEach((markers) => {
+                        const marker = markers[0];
+                        const count = markers.length;
+                        const color = currentGisMode === 'hazard' ? (colors[marker.risk_level] || '#f97316') : '#ef4444';
+
+                        if (count > 1) {
+                            const pin = document.createElement('button');
+                            pin.type = 'button';
+                            pin.className = 'pointer-events-auto absolute z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_10px_24px_rgba(15,23,42,.35)] transition hover:scale-125';
+                            pin.style.width = '32px';
+                            pin.style.height = '32px';
+                            pin.style.background = color;
+                            pin.style.color = 'white';
+                            pin.style.fontSize = '14px';
+                            pin.style.fontWeight = '800';
+                            pin.style.display = 'flex';
+                            pin.style.alignItems = 'center';
+                            pin.style.justifyContent = 'center';
+                            pin.textContent = count;
+                            pin.title = `${count} ${currentGisMode === 'hazard' ? 'hazard' : 'insiden'} pada lokasi ini`;
+                            pin.style.left = `${(Number(marker.x) / width) * 100}%`;
+                            pin.style.top = `${(Number(marker.y) / height) * 100}%`;
+                            pin.addEventListener('click', () => {
+                                const details = markers.map(m => {
+                                    if (currentGisMode === 'hazard') {
+                                        return `${m.title}\n${m.location}\nRisiko: ${m.risk_level}\nStatus: ${m.status}`;
+                                    } else {
+                                        return `${m.title}\n${m.location}\nSeverity: ${m.severity_level}\nStatus: ${m.status}`;
+                                    }
+                                }).join('\n\n---\n\n');
+                                alert(`${count} ${currentGisMode === 'hazard' ? 'Hazard' : 'Insiden'} pada lokasi ini:\n\n${details}`);
+                            });
+                            layer.appendChild(pin);
+                        } else {
+                            const pin = document.createElement('button');
+                            pin.type = 'button';
+                            pin.className = 'pointer-events-auto absolute z-30 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_10px_24px_rgba(15,23,42,.35)] transition hover:scale-125';
+                            pin.style.left = `${(Number(marker.x) / width) * 100}%`;
+                            pin.style.top = `${(Number(marker.y) / height) * 100}%`;
+                            pin.style.background = color;
+                            const riskText = currentGisMode === 'hazard' ? `Risiko: ${marker.risk_level}` : `Severity: ${marker.severity_level}`;
+                            pin.title = `${marker.title} - ${riskText}`;
+                            pin.addEventListener('click', () => {
+                                alert(`${marker.title}\n${marker.location}\n${riskText}\nStatus: ${marker.status}`);
+                            });
+                            layer.appendChild(pin);
+                        }
+                    });
+                });
+            };
+
+            const updateFloorplanRoomColors = (mode) => {
+                if (!floorplanViewer) return;
+                const event = new CustomEvent('gis-mode-changed', { detail: { mode: mode } });
+                floorplanViewer.dispatchEvent(event);
+                window.postMessage({ type: 'GIS_MODE_CHANGE', mode: mode }, '*');
+            };
+
+            const reloadFloorplanMarkers = () => {
+                if (!floorplanViewer) return;
+                let markersToShow = [];
+                if (currentGisMode === 'hazard') {
+                    markersToShow = hazardMarkers.filter(m => m.x && m.y);
+                } else {
+                    markersToShow = incidentMarkers.filter(m => m.x && m.y);
+                }
+                renderFloorplanMarkers(floorplanViewer, markersToShow);
+            };
+
+            // ============ FUNGSI UTAMA SET GIS MODE ============
+            const setGisMode = (mode, shouldFit = true) => {
+                currentGisMode = mode;
+                
+                // Render map markers
+                if (map && markerLayer) {
+                    const config = modeConfig[mode];
+                    const markerBounds = [...bounds];
+                    markerLayer.clearLayers();
+                    config.markers.forEach((marker) => {
+                        L.marker([marker.latitude, marker.longitude], { icon: createIcon(config.iconKey(marker)) })
+                            .addTo(markerLayer)
+                            .bindPopup(`
+                                <strong>${escapeHtml(marker.title)}</strong><br>
+                                ${escapeHtml(marker.location)}<br>
+                                ${config.popupDetail(marker)}
+                            `);
+                        markerBounds.push([marker.latitude, marker.longitude]);
+                    });
+                    if (shouldFit && markerBounds.length > 0) {
+                        map.fitBounds(markerBounds, { padding: [48, 48], maxZoom: 19 });
+                    }
+                }
+                
+                renderGisList(mode);
+                updateGisSummary(mode);
+                updateGisButtons(mode);
+                updateFloorplanRoomColors(mode);
+                reloadFloorplanMarkers();
+            };
+
+            const saveDefaultRoomColors = () => {
+                if (!floorplanViewer) return;
+                const roomGroups = floorplanViewer.querySelectorAll('[data-room-id]');
+                roomGroups.forEach((roomGroup) => {
+                    const shape = roomGroup.querySelector('rect, polygon, path');
+                    if (shape && !roomGroup.dataset.defaultFillColor) {
+                        const originalFill = shape.getAttribute('fill') || '#e2e8f0';
+                        roomGroup.dataset.defaultFillColor = originalFill;
+                    }
+                });
+            };
+
+            // ============ INISIALISASI MAP ============
             if (mapElement) {
                 const campusCenter = [-6.8761, 107.62063];
-                const map = L.map(mapElement, { zoomControl: true }).setView(campusCenter, 18);
+                map = L.map(mapElement, { zoomControl: true }).setView(campusCenter, 18);
 
                 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     attribution: 'Tiles &copy; Esri',
@@ -383,13 +514,14 @@
                     maxZoom: 20,
                 }).addTo(map);
 
-                const bounds = [];
-                const markerLayer = L.layerGroup().addTo(map);
+                bounds = [];
+                markerLayer = L.layerGroup().addTo(map);
                 const userPositionLayer = L.layerGroup().addTo(map);
                 let userPositionMarker = null;
 
                 addCampusBuildings(map, bounds);
                 addBuildingLegend(map);
+
                 L.polygon(campusBoundary, {
                     color: '#0a4db3',
                     fillColor: '#0a4db3',
@@ -399,38 +531,9 @@
                     dashArray: '6 8',
                 }).addTo(map);
 
-                const renderMapMarkers = (mode, shouldFit = false) => {
-                    const config = modeConfig[mode];
-                    const markerBounds = [...bounds];
-
-                    markerLayer.clearLayers();
-                    config.markers.forEach((marker) => {
-                        L.marker([marker.latitude, marker.longitude], { icon: createIcon(config.iconKey(marker)) })
-                            .addTo(markerLayer)
-                            .bindPopup(`
-                                <strong>${escapeHtml(marker.title)}</strong><br>
-                                ${escapeHtml(marker.location)}<br>
-                                ${config.popupDetail(marker)}
-                            `);
-
-                        markerBounds.push([marker.latitude, marker.longitude]);
-                    });
-
-                    if (shouldFit && markerBounds.length > 0) {
-                        map.fitBounds(markerBounds, { padding: [48, 48], maxZoom: 19 });
-                    }
-                };
-
-                const setGisMode = (mode, shouldFit = true) => {
-                    renderMapMarkers(mode, shouldFit);
-                    renderGisList(mode);
-                    updateGisSummary(mode);
-                    updateGisButtons(mode);
-                };
-
                 gisModeButtons.forEach((button) => {
                     button.addEventListener('click', () => {
-                        setGisMode(button.dataset.publicGisMode || 'hazard');
+                        setGisMode(button.dataset.publicGisMode || 'hazard', true);
                     });
                 });
 
@@ -441,16 +544,13 @@
                     const lng = position.coords.longitude;
                     const accuracy = Math.round(position.coords.accuracy || 0);
                     const isInsidePolman = isPointInsidePolygon([lat, lng], campusBoundary);
-
                     if (!isInsidePolman) {
                         userPositionLayer.clearLayers();
                         userPositionMarker = null;
                         setPositionStatus('Posisi GPS di luar area Polman.', 'outside');
                         return;
                     }
-
                     const latLng = [lat, lng];
-
                     if (!userPositionMarker) {
                         userPositionMarker = L.marker(latLng, { icon: createUserPositionIcon(), zIndexOffset: 1000 })
                             .addTo(userPositionLayer)
@@ -458,7 +558,6 @@
                     } else {
                         userPositionMarker.setLatLng(latLng);
                     }
-
                     setPositionStatus(`Posisi Anda terdeteksi di area Polman${accuracy ? ` (${accuracy} m)` : ''}.`, 'inside');
                 };
 
@@ -467,7 +566,6 @@
                         setPositionStatus('GPS tidak didukung browser ini.', 'error');
                         return;
                     }
-
                     setPositionStatus('Menunggu izin dan sinyal GPS...', 'waiting');
                     navigator.geolocation.watchPosition(updateUserPosition, () => {
                         userPositionLayer.clearLayers();
@@ -479,62 +577,22 @@
                         timeout: 15000,
                     });
                 };
-
                 startPositionTracking();
             }
 
+            // ============ FLOORPLAN NAVIGATION ============
             const selectFloor = (viewer, floor) => {
-                if (!viewer) {
-                    return;
-                }
-
+                if (!viewer) return;
                 viewer.dataset.activeFloor = String(floor);
                 viewer.querySelectorAll('[data-floor-tab]').forEach((tab) => {
                     const active = tab.dataset.targetFloor === String(floor);
                     tab.setAttribute('aria-selected', active ? 'true' : 'false');
-                    tab.className = active
-                        ? 'inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--primary-color)] px-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(10,77,179,0.24)] transition'
-                        : 'inline-flex min-h-11 items-center justify-center rounded-full bg-slate-100 px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-200';
+                    tab.className = active ?
+                        'inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--primary-color)] px-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(10,77,179,0.24)] transition' :
+                        'inline-flex min-h-11 items-center justify-center rounded-full bg-slate-100 px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-200';
                 });
-
                 viewer.querySelectorAll('[data-floor-panel]').forEach((panel) => {
                     panel.classList.toggle('hidden', panel.dataset.panelFloor !== String(floor));
-                });
-            };
-
-            const renderFloorplanMarkers = (viewer, markerData) => {
-                const floorplans = viewer?.querySelectorAll('.floorplan-html') ?? [];
-
-                floorplans.forEach((floorplan) => {
-                    const layer = floorplan?.querySelector('.floorplan-marker-layer');
-                    const width = Number(floorplan?.dataset.floorplanWidth || 4080);
-                    const height = Number(floorplan?.dataset.floorplanHeight || 3060);
-                    const buildingKey = floorplan?.dataset.buildingKey || 'gedung-teori';
-                    const floor = Number(floorplan?.dataset.floor || 2);
-
-                    if (!layer) {
-                        return;
-                    }
-
-                    layer.innerHTML = '';
-
-                    markerData
-                        .filter((marker) => (marker.building_key || 'gedung-teori') === buildingKey && Number(marker.floor || 2) === floor)
-                        .forEach((marker) => {
-                            const color = colors[marker.risk_level] || '#0a4db3';
-                            const pin = document.createElement('button');
-                            pin.type = 'button';
-                            pin.className = 'pointer-events-auto absolute z-30 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_10px_24px_rgba(15,23,42,.35)] transition hover:scale-125 focus:scale-125 focus:outline-none focus:ring-4 focus:ring-sky-200';
-                            pin.style.left = `${(Number(marker.x) / width) * 100}%`;
-                            pin.style.top = `${(Number(marker.y) / height) * 100}%`;
-                            pin.style.background = color;
-                            pin.title = `${marker.title} - Risiko: ${marker.risk_level}`;
-                            pin.setAttribute('aria-label', pin.title);
-                            pin.addEventListener('click', () => {
-                                alert(`${marker.title}\n${marker.location}\nRisiko: ${marker.risk_level}\nStatus: ${marker.status}`);
-                            });
-                            layer.appendChild(pin);
-                        });
                 });
             };
 
@@ -545,19 +603,15 @@
                     gpsStatus.textContent = 'GPS tidak didukung browser.';
                     return;
                 }
-
                 gpsStatus.textContent = 'Mendeteksi posisi...';
                 navigator.geolocation.getCurrentPosition((position) => {
                     const detected = buildingAt(position.coords.latitude, position.coords.longitude);
-
                     if (!detected) {
                         gpsStatus.textContent = 'Posisi belum masuk polygon gedung.';
                         return;
                     }
-
                     const floor = detected.default_floor || detected.floors?.[0] || 2;
                     gpsStatus.textContent = `${detected.name} terdeteksi`;
-
                     if (detected.key === floorplanViewer?.dataset.buildingKey) {
                         floorplanViewer.querySelector('[data-floorplan-building-label]').textContent = detected.name;
                         selectFloor(floorplanViewer, floor);
@@ -575,7 +629,11 @@
                 tab.addEventListener('click', () => selectFloor(floorplanViewer, tab.dataset.targetFloor));
             });
             gpsButton?.addEventListener('click', useGpsForFloorplan);
-            renderFloorplanMarkers(floorplanViewer, floorplanMarkers);
+
+            if (floorplanViewer) {
+                setTimeout(saveDefaultRoomColors, 500);
+                renderFloorplanMarkers(floorplanViewer, floorplanMarkers);
+            }
         })();
     </script>
 @endpush

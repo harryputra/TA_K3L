@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             IncidentReferenceSeeder::class,
             KnowledgeSeeder::class,
             EmergencyCenterSeeder::class,
+            DummyIncidentsHazardsSeeder::class,
         ]);
 
         $roles = Role::query()->get()->keyBy('code');

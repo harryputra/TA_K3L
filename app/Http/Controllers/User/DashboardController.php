@@ -36,6 +36,7 @@ class DashboardController extends Controller
                 ->take(3)
                 ->get()
             : collect();
+            
         [
             'hazardMarkers' => $hazardMarkers,
             'incidentMarkers' => $incidentMarkers,
@@ -43,6 +44,22 @@ class DashboardController extends Controller
             'summaryCounts' => $summaryCounts,
             'campusBuildingPolygons' => $campusBuildingPolygons,
         ] = $hazardMapData->build();
+
+        // ============ TAMBAHKAN INI ============
+        // Hitung summary untuk hazard
+        $hazardMapCounts = [
+            'total' => $hazardMarkers->count(),
+            'high' => $hazardMarkers->whereIn('risk_level', ['tinggi', 'kritis'])->count(),
+            'active' => $hazardMarkers->where('status', '!=', 'resolved')->count(),
+        ];
+        
+        // Hitung summary untuk incident
+        $incidentMapCounts = [
+            'total' => $incidentMarkers->count(),
+            'high' => $incidentMarkers->whereIn('severity_level', ['high', 'critical'])->count(),
+            'active' => $incidentMarkers->whereNotIn('status', ['resolved', 'closed', 'rejected'])->count(),
+        ];
+        // =====================================
 
         return view('user.dashboard', compact(
             'userDashboard',
@@ -55,6 +72,8 @@ class DashboardController extends Controller
             'floorplanMarkers',
             'summaryCounts',
             'campusBuildingPolygons',
+            'hazardMapCounts',      
+            'incidentMapCounts'     
         ));
     }
 }
