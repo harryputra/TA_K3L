@@ -152,6 +152,40 @@ dc(){ docker compose "$@"; }
 
 prod_ctx(){ export COMPOSE_PROJECT_NAME="$PROD_PROJECT"; }
 
+# Deteksi port host yang sudah dipakai (termasuk yang dibind Docker)
+host_port_busy(){
+  local port="$1"
+  if have ss; then ss -ltnH 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${port}\$"
+  elif have netstat; then netstat -ltn 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${port}\$"
+  else docker ps --format '{{.Ports}}' 2>/dev/null | grep -qE ":${port}->"; fi
+}
+# Apakah port sedang dipublish oleh container app kita sendiri? (jangan bump saat redeploy)
+port_owned_by_app(){ docker ps --filter "name=${PROD_PROJECT}-app" --format '{{.Ports}}' 2>/dev/null | grep -qE ":${1}->"; }
+# Cari port bebas mulai dari $1
+find_free_port(){
+  local p="$1" tries=0
+  while host_port_busy "$p"; do
+    p=$((p + 1)); tries=$((tries + 1))
+    [ "$tries" -ge 50 ] && return 1
+  done
+  echo "$p"
+}
+# Pastikan APP_PORT bebas; bila bentrok (dan bukan milik app ini), pindah otomatis
+ensure_free_port(){
+  local port; port="$(app_port)"
+  if host_port_busy "$port" && ! port_owned_by_app "$port"; then
+    warn "Port ${BOLD}$port${N} sudah dipakai proses lain di host."
+    local free; free="$(find_free_port "$((port + 1))" || true)"
+    if [ -n "$free" ]; then
+      set_env APP_PORT "$free"
+      warn "Otomatis pindah ke port bebas ${BOLD}$free${N} (APP_PORT diperbarui di .env)."
+      warn "➜ Arahkan Cloudflare Tunnel ke ${BOLD}127.0.0.1:$free${N} (bukan $port)."
+    else
+      err "Tidak menemukan port bebas dari $port. Set APP_PORT manual di .env."; exit 1
+    fi
+  fi
+}
+
 ensure_env_docker(){
   if [ ! -f .env ]; then cp .env.docker.example .env; ok ".env produksi dibuat dari .env.docker.example."; fi
   if [ "$(env_get DB_USERNAME)" = "root" ]; then
@@ -187,8 +221,9 @@ do_deploy(){
   hr; echo -e "${BOLD}  Mode PRODUKSI (Docker) — bersih, tanpa data contoh${N}"; hr
   prep_secrets
   warn_secrets_prod
+  ensure_free_port
   log "Build image & start stack (app + db)..."
-  dc up -d --build
+  dc up -d --build --remove-orphans
   wait_ready_docker
   prod_summary_docker
 }

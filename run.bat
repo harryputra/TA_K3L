@@ -61,6 +61,20 @@ if exist ".env" for /f "usebackq tokens=2 delims==" %%a in (`findstr /b /c:"APP_
 set "PORT=%PORT:"=%"
 exit /b 0
 
+:ensure_free_port
+REM Lewati bila port memang milik container app kita (redeploy)
+docker ps --filter "name=%PROD_PROJECT%-app" --format "{{.Ports}}" 2>nul | findstr ":%PORT%->" >nul 2>nul && exit /b 0
+:efp_check
+netstat -ano | findstr /r /c:":%PORT% .*LISTENING" >nul 2>nul
+if errorlevel 1 goto efp_write
+echo [!] Port %PORT% dipakai proses lain - mencari port bebas...
+set /a PORT+=1
+goto efp_check
+:efp_write
+powershell -NoProfile -Command "(Get-Content .env) -replace '^APP_PORT=.*', 'APP_PORT=%PORT%' | Set-Content .env -Encoding utf8"
+echo [v] Memakai port %PORT% (APP_PORT diperbarui di .env).
+exit /b 0
+
 REM =============================== DEMO ===============================
 :demo
 call :need_tools
@@ -102,10 +116,11 @@ echo [^>] Menyiapkan secret produksi (.env)...
 set "ADMINPW="
 for /f "delims=" %%p in ('powershell -NoProfile -ExecutionPolicy Bypass -File "docker\prep-env.ps1" -EnvFile ".env"') do set "ADMINPW=%%p"
 findstr /r /c:"^APP_DEBUG=true" ".env" >nul 2>nul && echo [!] APP_DEBUG=true - set false untuk produksi.
-echo [^>] Build image ^& start stack (app + db)...
-docker compose up -d --build
-if errorlevel 1 (echo [x] docker compose gagal. & goto end)
 call :read_port
+call :ensure_free_port
+echo [^>] Build image ^& start stack (app + db)...
+docker compose up -d --build --remove-orphans
+if errorlevel 1 (echo [x] docker compose gagal. & goto end)
 echo [^>] Menunggu app sehat (http://127.0.0.1:%PORT%/up)...
 set /a TRIES=0
 :waitloop
