@@ -1,5 +1,9 @@
 * text=auto eol=lf
 
+# Skrip shell WAJIB LF (agar jalan di Linux server); .bat CRLF untuk cmd.exe
+*.sh  text eol=lf
+*.bat text eol=crlf
+
 *.blade.php diff=html
 *.css diff=css
 *.html diff=html

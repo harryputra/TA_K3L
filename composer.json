@@ -53,6 +53,12 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "seed:essential": [
+            "@php artisan db:seed --class=EssentialSeeder --force"
+        ],
+        "seed:demo": [
+            "@php artisan db:seed --class=DemoSeeder --force"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

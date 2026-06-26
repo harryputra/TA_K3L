@@ -127,7 +127,34 @@ Untuk development lokal yang terkena masalah sertifikat cURL, `FONNTE_VERIFY_SSL
 
 Dengan `QUEUE_CONNECTION=sync`, pengiriman notifikasi dilakukan langsung saat request diproses. Ini mudah untuk demo dan debugging, tetapi response form bisa lebih lambat kalau API WhatsApp sedang lambat.
 
-## Instalasi Lokal
+## Cara Cepat (one-click)
+
+Tersedia runner satu-klik yang otomatis menyiapkan `.env`, dependensi, migrasi,
+seed, lalu menjalankan aplikasi.
+
+```bash
+# Linux/macOS/Git Bash
+./run.sh            # demo (lokal/dev): data contoh + akun per-role + hot-reload Vite
+./run.sh deploy     # produksi: build optimized + seed ESENSIAL saja (admin dari .env)
+./run.sh help       # daftar perintah (status, doctor, demo-reset, prod-logs, dll)
+```
+
+```bat
+REM Windows
+run.bat             :: demo (lokal/dev)
+run.bat deploy      :: produksi (preview foreground)
+run.bat help
+```
+
+Perbedaan mode:
+
+- `demo` — seed `EssentialSeeder` + `DemoSeeder` (akun contoh + data insiden/hazard
+  dummy). Untuk showcase & pengujian. Reset cepat: `./run.sh demo-reset`.
+- `deploy`/`prod` — **bersih tanpa data contoh**: hanya skema + data referensi +
+  **1 admin** dari `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`). Ganti secret dulu.
+  Server produktif lab sebaiknya di-containerize (Docker) atau dijadikan unit systemd.
+
+## Instalasi Lokal (manual)
 
 ```bash
 composer install
