@@ -123,18 +123,22 @@
                 return;
             }
 
+            // Pola halus: sembunyi saat scroll TURUN, muncul saat scroll NAIK.
+            // Tanpa timer idle (penyebab flicker), pakai akumulator arah + rAF.
+            const TOP_ZONE = 24;       // selalu tampil di dekat puncak
+            const HIDE_AFTER = 140;    // baru boleh sembunyi setelah lewat offset ini
+            const HIDE_DELTA = 12;     // total scroll-turun untuk menyembunyikan
+            const SHOW_DELTA = 12;     // total scroll-naik untuk memunculkan
+
             let lastY = window.scrollY;
-            let idleTimer = null;
+            let accumulated = 0;
             let isHidden = false;
-            const scrollThreshold = 12;
-            const topRevealOffset = 32;
-            const idleDelay = 320;
+            let ticking = false;
 
             const showNavbar = () => {
                 if (!isHidden) {
                     return;
                 }
-
                 navbar.classList.remove('-translate-y-[140%]', 'opacity-0');
                 navbar.classList.add('translate-y-0', 'opacity-100');
                 isHidden = false;
@@ -144,48 +148,51 @@
                 if (isHidden) {
                     return;
                 }
-
                 navbar.classList.remove('translate-y-0', 'opacity-100');
                 navbar.classList.add('-translate-y-[140%]', 'opacity-0');
                 isHidden = true;
             };
 
-            const armIdleReveal = () => {
-                window.clearTimeout(idleTimer);
-                idleTimer = window.setTimeout(() => {
-                    showNavbar();
-                }, idleDelay);
-            };
-
-            navbar.classList.add('translate-y-0', 'opacity-100');
-            armIdleReveal();
-
-            window.addEventListener('scroll', () => {
+            const evaluate = () => {
+                ticking = false;
                 const currentY = window.scrollY;
                 const delta = currentY - lastY;
+                lastY = currentY;
 
-                if (currentY <= topRevealOffset) {
+                // Dekat puncak: selalu tampil.
+                if (currentY <= TOP_ZONE) {
+                    accumulated = 0;
                     showNavbar();
-                    lastY = currentY;
-                    armIdleReveal();
                     return;
                 }
 
-                if (delta > scrollThreshold) {
-                    hideNavbar();
-                } else if (delta < -scrollThreshold) {
-                    showNavbar();
+                // Reset akumulator ketika arah berubah (anti-getar/hysteresis).
+                if ((delta > 0 && accumulated < 0) || (delta < 0 && accumulated > 0)) {
+                    accumulated = 0;
                 }
+                accumulated += delta;
 
-                lastY = currentY;
-                armIdleReveal();
+                if (accumulated > HIDE_DELTA && currentY > HIDE_AFTER) {
+                    hideNavbar();
+                    accumulated = 0;
+                } else if (accumulated < -SHOW_DELTA) {
+                    showNavbar();
+                    accumulated = 0;
+                }
+            };
+
+            navbar.classList.add('translate-y-0', 'opacity-100');
+
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    ticking = true;
+                    window.requestAnimationFrame(evaluate);
+                }
             }, { passive: true });
 
-            ['mouseenter', 'focusin', 'touchstart'].forEach((eventName) => {
-                navbar.addEventListener(eventName, () => {
-                    showNavbar();
-                    armIdleReveal();
-                }, { passive: true });
+            // Selalu tampilkan saat di-hover atau fokus keyboard.
+            ['mouseenter', 'focusin'].forEach((eventName) => {
+                navbar.addEventListener(eventName, showNavbar, { passive: true });
             });
         })();
     </script>
