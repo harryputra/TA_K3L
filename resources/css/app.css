@@ -9,3 +9,15 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/*
+ * Leaflet: kurung peta dalam stacking context sendiri.
+ * Pane & control Leaflet memakai z-index sampai ~1000 sehingga bisa menutupi
+ * navbar floating (z-[99]). Dengan isolation + z-index:0, seluruh isi peta
+ * (tiles, kontrol, legend, popup) terkunci di bawah navbar.
+ */
+.leaflet-container {
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
+}

@@ -73,7 +73,7 @@
         <div class="relative overflow-hidden rounded-[1.45rem] bg-white shadow-[0_22px_55px_rgba(15,23,42,0.14)] ring-1 ring-slate-200">
             <div id="public-gis-position-status"
                 class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.18)] ring-1 ring-slate-200"
-                style="z-index: 500; max-width: calc(100% - 2rem);">
+                style="z-index: 20; max-width: calc(100% - 2rem);">
                 <span class="material-symbols-outlined text-[18px] text-[var(--primary-color)]">my_location</span>
                 Mengaktifkan tracking GPS...
             </div>
