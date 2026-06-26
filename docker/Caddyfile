@@ -1,0 +1,21 @@
+{
+	# FrankenPHP — server PHP modern (pengganti nginx+php-fpm)
+	frankenphp
+	# HTTPS di-handle Cloudflare Tunnel; container cukup HTTP.
+	auto_https off
+}
+
+:80 {
+	root * /app/public
+	encode zstd br gzip
+
+	# Header keamanan dasar
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	php_server
+}

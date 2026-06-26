@@ -1,0 +1,65 @@
+# ============================================================
+# SIAGA POLMAN K3L — stack PRODUKSI (server lab, semua di Docker)
+#   app : Laravel 12 di FrankenPHP (HTTP :80 di dalam container)
+#   db  : MariaDB 11 (TIDAK diekspos ke host/publik)
+# Dijalankan via: ./run.sh deploy
+# ============================================================
+name: ${COMPOSE_PROJECT_NAME:-ta-k3l-prod}
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ta-k3l-app:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-ta-k3l-prod}-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Override penting agar app selalu menuju service 'db' & mode produksi
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: "3306"
+      SERVER_NAME: ":80"
+    ports:
+      # Hanya ke localhost — Cloudflare Tunnel yang ekspos ke publik.
+      - "127.0.0.1:${APP_PORT:-8095}:80"
+    volumes:
+      - storage_data:/app/storage
+    networks:
+      - k3l
+
+  db:
+    image: mariadb:11
+    container_name: ${COMPOSE_PROJECT_NAME:-ta-k3l-prod}-db
+    restart: unless-stopped
+    # Sengaja TANPA 'ports:' — DB tidak boleh diekspos ke publik.
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-sistem_k3l}
+      MARIADB_USER: ${DB_USERNAME:-k3l}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-changeme}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-changeme-root}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - k3l
+
+volumes:
+  db_data:
+  storage_data:
+
+networks:
+  k3l:
+    driver: bridge

@@ -1,30 +1,24 @@
 #!/usr/bin/env bash
 # ======================================================================
-# SIAGA POLMAN K3L — one-click runner (Laravel 12, native PHP/Vite)
+# SIAGA POLMAN K3L — one-click runner
 # Standar: ~/.claude/CLAUDE.md (mode demo vs produksi + pemisahan seed).
 #
-#   ./run.sh                 # = demo (lokal/dev): setup penuh + dev server
-#   ./run.sh deploy          # = produksi: build optimized + seed ESENSIAL saja
-#   ./run.sh status          # status server produksi
+#   ./run.sh                 # = demo (lokal/dev): native PHP/Vite + hot-reload
+#   ./run.sh deploy          # = produksi: SELURUH stack via Docker (app + db)
+#   ./run.sh status|prod-logs|prod-down|prod-restart
 #   ./run.sh help
 #
-# demo  = data contoh + akun per-role (showcase/testing, hot-reload Vite).
-# deploy= BERSIH tanpa data contoh; admin diambil dari .env (ADMIN_*).
-#
-# CATATAN: project ini berjalan native (BUKAN Docker). `deploy` menjalankan
-# server produksi yang optimized + persisten (lepas dari terminal). Untuk
-# server lab yang lebih tahan banting, disarankan containerize (bisa
-# ditambahkan kemudian) atau pasang sebagai unit systemd.
+# demo  = native (butuh php/composer/node di mesin dev). Data contoh + akun per-role.
+# deploy= Docker (server lab TIDAK punya php/node). BERSIH; admin dari .env.
 # ======================================================================
 set -euo pipefail
 cd "$(dirname "$0")"
 
 # --------------------------- konfigurasi ------------------------------
-DEFAULT_PORT=8000
+DEFAULT_PORT=8000          # default port demo (native)
 VITE_PORT=5173
-PID_DIR="storage/app/run"
-PID_FILE="$PID_DIR/prod-serve.pid"
-PROD_LOG="storage/logs/prod-serve.log"
+PROD_PROJECT="ta-k3l-prod" # COMPOSE_PROJECT_NAME stack produksi
+NEW_ADMIN_PW=""            # diisi bila run.sh men-generate password admin
 
 # ------------------------------ warna ---------------------------------
 if [ -t 1 ]; then
@@ -39,33 +33,52 @@ hr(){ echo -e "${B}────────────────────�
 # ------------------------------ helpers -------------------------------
 have(){ command -v "$1" >/dev/null 2>&1; }
 
-env_get(){ # baca 1 key dari .env
+env_get(){ # baca 1 key dari .env (selalu return 0)
   [ -f .env ] || return 0
-  grep -E "^$1=" .env | head -1 | cut -d= -f2- | sed 's/^"//; s/"$//' | tr -d '\r'
+  grep -E "^$1=" .env 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^"//; s/"$//' | tr -d '\r' || true
 }
+
+set_env(){ # set/replace key di .env
+  local k="$1" v="$2" esc
+  esc="$(printf '%s' "$v" | sed -e 's/[\\&|]/\\&/g')"
+  if grep -qE "^${k}=" .env 2>/dev/null; then
+    sed -i "s|^${k}=.*|${k}=${esc}|" .env
+  else
+    printf '%s=%s\n' "$k" "$v" >> .env
+  fi
+}
+
+gen_secret(){ openssl rand -hex 16 2>/dev/null || { head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n'; }; }
 
 app_port(){ local p; p="$(env_get APP_PORT)"; echo "${p:-$DEFAULT_PORT}"; }
 
+confirm_destructive(){
+  if [ -t 0 ]; then
+    read -r -p "$(echo -e "$1") Ketik 'HAPUS' untuk lanjut: " a
+    [ "$a" = "HAPUS" ] || { err "Dibatalkan."; exit 1; }
+  else warn "Non-interaktif: lanjut tanpa konfirmasi."; fi
+}
+
+# ======================================================================
+#  MODE DEMO (native, lokal/dev)
+# ======================================================================
 need_tools(){
   local miss=0
-  for t in php composer; do
-    have "$t" || { err "$t tidak ditemukan di PATH. Pasang dulu (php 8.2+, composer)."; miss=1; }
+  for t in php composer node npm; do
+    have "$t" || { err "$t tidak ada di PATH (mode demo butuh php 8.2+, composer, node, npm)."; miss=1; }
   done
-  for t in node npm; do
-    have "$t" || { err "$t tidak ditemukan (perlu untuk build asset Vite)."; miss=1; }
-  done
-  [ "$miss" = 0 ] || { err "Lengkapi prasyarat lalu jalankan ulang."; exit 1; }
+  if [ "$miss" != 0 ]; then
+    err "Mesin ini tanpa toolchain native."
+    warn "Di SERVER (hanya Docker) gunakan: ${BOLD}./run.sh deploy${N}"
+    exit 1
+  fi
 }
 
-ensure_env(){
-  if [ ! -f .env ]; then cp .env.example .env; ok ".env dibuat dari .env.example."; fi
-}
-
-ensure_key(){
+ensure_env_native(){ [ -f .env ] || { cp .env.example .env; ok ".env dibuat dari .env.example."; }; }
+ensure_key_native(){
   local k; k="$(env_get APP_KEY)"
   if [ -z "$k" ]; then log "Membuat APP_KEY..."; php artisan key:generate --force >/dev/null; ok "APP_KEY dibuat."; fi
 }
-
 ensure_storage_link(){ [ -e public/storage ] || php artisan storage:link >/dev/null 2>&1 || true; }
 
 port_busy(){
@@ -76,33 +89,23 @@ port_busy(){
   else return 1; fi
 }
 
-migrate(){ log "Migrasi database..."; php artisan migrate --force; }
-seed_essential(){ log "Seed esensial (referensi/lookup + admin dari .env)..."; php artisan db:seed --class=EssentialSeeder --force; }
-seed_demo(){ log "Seed data contoh (demo)..."; php artisan db:seed --class=DemoSeeder --force; }
-
-# ----------------- proses server produksi (PID) -----------------------
-prod_running(){ [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; }
-prod_stop_silent(){
-  if prod_running; then kill "$(cat "$PID_FILE")" 2>/dev/null || true; sleep 1; fi
-  rm -f "$PID_FILE" 2>/dev/null || true
-}
-
-# =============================== DEMO =================================
 do_demo(){
-  need_tools; ensure_env; ensure_key
-  [ -d vendor ] || { log "composer install (lengkap dengan dev)..."; composer install; }
+  need_tools; ensure_env_native; ensure_key_native
+  [ -d vendor ] || { log "composer install..."; composer install; }
   [ -d node_modules ] || { log "npm install..."; npm install; }
   ensure_storage_link
-  migrate; seed_essential; seed_demo
+  log "Migrasi + seed (esensial + demo)..."
+  php artisan migrate --force
+  php artisan db:seed --class=EssentialSeeder --force
+  php artisan db:seed --class=DemoSeeder --force
 
   local port; port="$(app_port)"
   if port_busy "$port"; then
-    warn "Port ${BOLD}$port${N} sudah dipakai — kemungkinan app sudah jalan (mungkin mode produksi)."
-    warn "Server: pakai ${BOLD}./run.sh deploy${N} • Lokal: ubah ${BOLD}APP_PORT=${N} di .env lalu jalankan lagi."
+    warn "Port ${BOLD}$port${N} sudah dipakai — mungkin app sudah jalan."
+    warn "Ubah ${BOLD}APP_PORT=${N} di .env atau hentikan proses lama."
   fi
-
   demo_summary "$port"
-  log "Menjalankan dev server (serve + queue + vite). Tekan ${BOLD}Ctrl+C${N} untuk berhenti."
+  log "Menjalankan dev server (serve + queue + vite). ${BOLD}Ctrl+C${N} untuk berhenti."
   SERVER_PORT="$port" npx concurrently -k -n serve,queue,vite -c "#93c5fd,#fdba74,#86efac" \
     "php artisan serve --host=127.0.0.1 --port=$port" \
     "php artisan queue:listen --tries=1 --timeout=0" \
@@ -118,156 +121,148 @@ demo_summary(){
   echo -e "    • Admin     : ${C}admin@k3l.local${N}"
   echo -e "    • Satgas    : ${C}satgas@k3l.local${N}"
   echo -e "    • Mahasiswa : ${C}mahasiswa@k3l.local${N}"
-  echo -e "  Portal publik bisa dipakai tanpa login."
   echo -e "  Reset data demo : ${Y}./run.sh demo-reset${N}"
   echo -e "  ${Y}Ini mode lokal/dev — untuk SERVER pakai: ${BOLD}./run.sh deploy${N}"
   hr
 }
 
-# ============================== DEPLOY ===============================
-warn_secrets(){
-  local v
-  v="$(env_get APP_KEY)";   [ -z "$v" ] && warn "APP_KEY masih kosong."
-  v="$(env_get APP_DEBUG)"; [ "$v" = "true" ] && warn "APP_DEBUG=true — set ${BOLD}false${N} untuk produksi."
-  v="$(env_get APP_ENV)";   [ "$v" = "production" ] || warn "APP_ENV bukan 'production' (sekarang: '${v:-?}')."
-  v="$(env_get ADMIN_PASSWORD)"
-  if [ -z "$v" ] || [ "$v" = "password" ]; then
-    warn "ADMIN_PASSWORD masih default — ${BOLD}GANTI${N} di .env sebelum produksi."
-  fi
-}
-
-do_deploy(){
-  need_tools; ensure_env; ensure_key
-  hr; echo -e "${BOLD}  Mode PRODUKSI — bersih, tanpa data contoh${N}"; hr
-  warn_secrets
-
-  log "composer install (produksi, tanpa dev, optimized autoloader)..."
-  composer install --no-dev --optimize-autoloader
-  log "Build asset frontend (vite build)..."
-  npm install
-  npm run build
-  ensure_storage_link
-  migrate; seed_essential
-
-  log "Optimasi cache Laravel (config/route/view)..."
-  php artisan config:cache >/dev/null
-  php artisan route:cache >/dev/null
-  php artisan view:cache >/dev/null
-
-  local port; port="$(app_port)"
-  prod_stop_silent
-  mkdir -p "$PID_DIR"
-  log "Menjalankan server produksi di 0.0.0.0:${port} (background, lepas dari terminal)..."
-  nohup php artisan serve --host=0.0.0.0 --port="$port" >"$PROD_LOG" 2>&1 &
-  echo $! > "$PID_FILE"
-  sleep 2
-  if prod_running; then ok "Server produksi aktif (PID $(cat "$PID_FILE"))."; else
-    err "Server gagal start. Lihat log: ${BOLD}./run.sh prod-logs${N}"; exit 1; fi
-  prod_summary "$port"
-}
-
-prod_summary(){
-  local port="$1"; hr
-  echo -e "${BOLD}${G}  SIAGA POLMAN K3L — mode PRODUKSI${N}"; hr
-  echo -e "  Web   : ${C}http://0.0.0.0:${port}${N}  (proxy reverse → 127.0.0.1:${port})"
-  echo -e "  Login : pakai ${BOLD}admin${N} dari .env (ADMIN_EMAIL / ADMIN_PASSWORD)."
-  echo -e "  Tanpa data contoh — hanya skema + data referensi + 1 admin."
-  echo
-  echo -e "  Kelola: ${C}./run.sh prod-logs${N} (lihat log) • ${C}./run.sh prod-restart${N} • ${C}./run.sh prod-down${N}"
-  echo -e "  Update: ${C}git pull${N} → ${C}./run.sh deploy${N}"
-  echo -e "  ${Y}Catatan: 'php artisan serve' = stop-gap. Untuk server produktif,${N}"
-  echo -e "  ${Y}disarankan containerize (Docker) atau pasang sebagai unit systemd.${N}"
-  hr
-}
-
-do_prod_down(){
-  if prod_running; then kill "$(cat "$PID_FILE")" 2>/dev/null || true; rm -f "$PID_FILE"; ok "Server produksi dihentikan (data aman)."
-  else warn "Tidak ada server produksi yang tercatat berjalan."; rm -f "$PID_FILE" 2>/dev/null || true; fi
-}
-
-do_prod_logs(){
-  [ -f "$PROD_LOG" ] || { warn "Belum ada log produksi ($PROD_LOG)."; return 0; }
-  log "Menampilkan log produksi (Ctrl+C keluar dari log, server tetap jalan)..."
-  tail -f -n 100 "$PROD_LOG"
-}
-
-# =============================== UMUM ================================
-do_demo_down(){
-  warn "Mode demo berjalan di ${BOLD}foreground${N}. Hentikan dengan ${BOLD}Ctrl+C${N} di terminal-nya."
-  warn "Untuk menghentikan server PRODUKSI gunakan: ${BOLD}./run.sh prod-down${N}"
-}
-
-confirm_destructive(){
-  if [ -t 0 ]; then
-    read -r -p "$1 Ketik 'HAPUS' untuk lanjut: " a
-    [ "$a" = "HAPUS" ] || { err "Dibatalkan."; exit 1; }
-  else warn "Non-interaktif: lanjut tanpa konfirmasi."; fi
-}
-
 do_demo_reset(){
-  need_tools; ensure_env; ensure_key
+  need_tools; ensure_env_native; ensure_key_native
   confirm_destructive "Ini akan ${BOLD}menghapus & isi ulang${N} seluruh data DB dengan data demo."
-  log "migrate:fresh + seed esensial + demo..."
   php artisan migrate:fresh --force
-  seed_essential; seed_demo
+  php artisan db:seed --class=EssentialSeeder --force
+  php artisan db:seed --class=DemoSeeder --force
   ok "Data demo di-reset."
 }
 
-do_reset(){
-  need_tools; ensure_env; ensure_key
-  confirm_destructive "${R}PERINGATAN:${N} ini ${BOLD}menghapus SEMUA data${N} lalu seed ESENSIAL saja (tanpa demo)."
-  log "migrate:fresh + seed esensial..."
-  php artisan migrate:fresh --force
-  seed_essential
-  ok "Database di-reset ke kondisi esensial (produksi-bersih)."
+do_demo_down(){
+  warn "Mode demo berjalan di ${BOLD}foreground${N}. Hentikan dengan ${BOLD}Ctrl+C${N} di terminal-nya."
+  warn "Untuk stack PRODUKSI (Docker) gunakan: ${BOLD}./run.sh prod-down${N}"
 }
 
-do_status(){
-  hr; echo -e "${BOLD}  Status${N}"; hr
-  local port; port="$(app_port)"
-  if prod_running; then ok "Server PRODUKSI: AKTIF (PID $(cat "$PID_FILE"), port $port)."
-  else warn "Server PRODUKSI: tidak berjalan."; fi
-  if port_busy "$port"; then echo -e "  Port ${BOLD}$port${N}: ${G}dipakai${N} (ada listener)."
-  else echo -e "  Port ${BOLD}$port${N}: ${Y}bebas${N}."; fi
+# ======================================================================
+#  MODE DEPLOY (Docker, produksi)
+# ======================================================================
+need_docker(){
+  have docker || { err "Docker belum terpasang."; exit 1; }
+  docker info >/dev/null 2>&1 || { err "Docker daemon mati / tak bisa diakses (cek 'docker info')."; exit 1; }
+  docker compose version >/dev/null 2>&1 || { err "Plugin 'docker compose' tidak tersedia."; exit 1; }
+}
+dc(){ docker compose "$@"; }
+
+prod_ctx(){ export COMPOSE_PROJECT_NAME="$PROD_PROJECT"; }
+
+ensure_env_docker(){
+  if [ ! -f .env ]; then cp .env.docker.example .env; ok ".env produksi dibuat dari .env.docker.example."; fi
+  if [ "$(env_get DB_USERNAME)" = "root" ]; then
+    warn "DB_USERNAME=root terdeteksi (mungkin .env native). Untuk Docker sebaiknya 'k3l'."
+  fi
+}
+
+prep_secrets(){
+  local v
+  v="$(env_get DB_PASSWORD)";      case "$v" in ""|__*) set_env DB_PASSWORD "$(gen_secret)"; ok "DB_PASSWORD digenerate.";; esac
+  v="$(env_get DB_ROOT_PASSWORD)"; case "$v" in ""|__*) set_env DB_ROOT_PASSWORD "$(gen_secret)"; ok "DB_ROOT_PASSWORD digenerate.";; esac
+  v="$(env_get ADMIN_PASSWORD)";   case "$v" in ""|__*|password) NEW_ADMIN_PW="$(gen_secret)"; set_env ADMIN_PASSWORD "$NEW_ADMIN_PW"; warn "ADMIN_PASSWORD digenerate (lihat ringkasan).";; esac
+}
+
+warn_secrets_prod(){
+  if [ "$(env_get APP_DEBUG)" = "true" ]; then warn "APP_DEBUG=true — set ${BOLD}false${N} untuk produksi."; fi
+  if [ -z "$(env_get FONNTE_DEVICE_TOKEN)" ]; then warn "FONNTE_DEVICE_TOKEN kosong — notifikasi WhatsApp non-aktif sampai diisi."; fi
+}
+
+wait_ready_docker(){
+  local port url t=60
+  port="$(app_port)"; url="http://127.0.0.1:${port}/up"
+  log "Menunggu app sehat (${url})..."
+  while [ "$t" -gt 0 ]; do
+    if curl -fsS "$url" >/dev/null 2>&1; then ok "App sehat (HTTP /up OK)."; return 0; fi
+    t=$((t - 1)); sleep 2
+  done
+  warn "Belum merespon. Cek log: ${BOLD}./run.sh prod-logs${N}"
+}
+
+do_deploy(){
+  need_docker; prod_ctx; ensure_env_docker
+  hr; echo -e "${BOLD}  Mode PRODUKSI (Docker) — bersih, tanpa data contoh${N}"; hr
+  prep_secrets
+  warn_secrets_prod
+  log "Build image & start stack (app + db)..."
+  dc up -d --build
+  wait_ready_docker
+  prod_summary_docker
+}
+
+prod_summary_docker(){
+  local port; port="$(app_port)"; hr
+  echo -e "${BOLD}${G}  SIAGA POLMAN K3L — PRODUKSI (Docker) AKTIF${N}"; hr
+  echo -e "  Web (lokal)  : ${C}http://127.0.0.1:${port}${N}  (publik via Cloudflare Tunnel)"
+  echo -e "  Health       : ${C}http://127.0.0.1:${port}/up${N}"
+  echo -e "  Login admin  : ${C}$(env_get ADMIN_EMAIL)${N}"
+  if [ -n "$NEW_ADMIN_PW" ]; then
+    echo -e "  Password admin (BARU — SIMPAN!): ${BOLD}${NEW_ADMIN_PW}${N}"
+  else
+    echo -e "  Password admin: sesuai ${BOLD}ADMIN_PASSWORD${N} di .env"
+  fi
+  echo -e "  Tanpa data contoh — hanya skema + data referensi + 1 admin."
+  echo
+  echo -e "  Kelola : ${C}./run.sh prod-logs${N} • ${C}./run.sh prod-restart${N} • ${C}./run.sh prod-down${N} • ${C}./run.sh status${N}"
+  echo -e "  Update : ${C}git pull${N} → ${C}./run.sh deploy${N}"
+  echo -e "  Publik : Cloudflare Tunnel → Public Hostname → ${BOLD}127.0.0.1:${port}${N}"
+  echo -e "  TTFB   : ${C}curl -s -o /dev/null -w 'TTFB:%{time_starttransfer} Total:%{time_total}\\n' http://127.0.0.1:${port}/up${N}"
   hr
 }
 
+do_prod_down(){ need_docker; prod_ctx; ensure_env_docker; dc down; ok "Stack produksi dihentikan (data aman di volume)."; }
+do_prod_restart(){ need_docker; prod_ctx; ensure_env_docker; log "Redeploy..."; dc up -d --build; wait_ready_docker; ok "Restart selesai."; }
+do_prod_logs(){ need_docker; prod_ctx; ensure_env_docker; shift || true; dc logs -f --tail=100 "$@"; }
+do_status(){ need_docker; prod_ctx; ensure_env_docker; hr; echo -e "${BOLD}  Status produksi (${PROD_PROJECT})${N}"; hr; dc ps; hr; }
+
+do_reset(){
+  need_docker; prod_ctx; ensure_env_docker
+  confirm_destructive "${R}PERINGATAN:${N} hapus ${BOLD}SEMUA data${N} (volume DB & storage) lalu deploy ulang bersih."
+  dc down -v; ok "Volume produksi dihapus."
+  do_deploy
+}
+
+# ============================== UMUM =================================
 do_doctor(){
   hr; echo -e "${BOLD}  Doctor${N}"; hr
+  echo -e "${BOLD}Native (untuk 'demo')${N}:"
   for t in php composer node npm; do
-    if have "$t"; then ok "$t: $("$t" --version 2>/dev/null | head -1)"; else err "$t: TIDAK ADA"; fi
+    if have "$t"; then ok "$t: $("$t" --version 2>/dev/null | head -1)"; else warn "$t: TIDAK ADA"; fi
   done
-  [ -f .env ] && ok ".env ada" || warn ".env belum ada (akan dibuat dari .env.example)"
-  [ -d vendor ] && ok "vendor/ ada" || warn "vendor/ belum ada (composer install)"
-  [ -d node_modules ] && ok "node_modules/ ada" || warn "node_modules/ belum ada (npm install)"
-  [ -n "$(env_get APP_KEY)" ] && ok "APP_KEY terisi" || warn "APP_KEY kosong"
+  echo -e "${BOLD}Docker (untuk 'deploy')${N}:"
+  if have docker; then ok "docker: $(docker --version 2>/dev/null)"; else warn "docker: TIDAK ADA"; fi
+  if docker compose version >/dev/null 2>&1; then ok "docker compose: tersedia"; else warn "docker compose: TIDAK ADA"; fi
+  [ -f .env ] && ok ".env ada" || warn ".env belum ada"
   hr
 }
 
 usage(){
   cat <<EOF
-$(echo -e "${BOLD}SIAGA POLMAN K3L — runner (demo/deploy)${N}")
-  $(echo -e "${BOLD}Demo (lokal/dev)${N}")  : (kosong)|up|demo|start, demo-reset, demo-down
-  $(echo -e "${BOLD}Produksi (server)${N}") : deploy|prod, prod-down, prod-restart, prod-logs
-  $(echo -e "${BOLD}Umum${N}")             : status, reset|hard-reset, doctor, help
+$(echo -e "${BOLD}SIAGA POLMAN K3L — runner${N}")
+  $(echo -e "${BOLD}Demo (lokal/dev, native)${N}") : (kosong)|up|demo|start, demo-reset, demo-down
+  $(echo -e "${BOLD}Produksi (server, Docker)${N}") : deploy|prod, prod-down, prod-restart, prod-logs, reset
+  $(echo -e "${BOLD}Umum${N}")                     : status, doctor, help
 
-  demo   = data contoh + akun per-role + hot-reload Vite (default).
-  deploy = build produksi + seed ESENSIAL saja, admin dari .env (BERSIH).
+  demo   = native php/vite + data contoh + akun per-role (butuh toolchain).
+  deploy = SELURUH stack via Docker (app+db), seed ESENSIAL saja, admin dari .env.
 EOF
 }
 
 # ------------------------------- router -------------------------------
 case "${1:-up}" in
-  ""|up|demo|start)   do_demo ;;
-  deploy|prod)        do_deploy ;;
-  demo-reset)         do_demo_reset ;;
-  demo-down)          do_demo_down ;;
-  prod-down|down|stop) do_prod_down ;;
-  prod-restart|restart) do_deploy ;;
-  prod-logs|logs)     do_prod_logs ;;
-  reset|hard-reset)   do_reset ;;
-  status|ps)          do_status ;;
-  doctor)             do_doctor ;;
-  help|-h|--help)     usage ;;
+  ""|up|demo|start)     do_demo ;;
+  deploy|prod)          do_deploy ;;
+  demo-reset)           do_demo_reset ;;
+  demo-down)            do_demo_down ;;
+  prod-down|down|stop)  do_prod_down ;;
+  prod-restart|restart) do_prod_restart ;;
+  prod-logs|logs)       do_prod_logs "$@" ;;
+  reset|hard-reset)     do_reset ;;
+  status|ps)            do_status ;;
+  doctor)               do_doctor ;;
+  help|-h|--help)       usage ;;
   *) err "Perintah tak dikenal: $1"; echo; usage; exit 1 ;;
 esac

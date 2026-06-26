@@ -1,0 +1,36 @@
+# Build context kecil & aman — jangan ikutkan deps/host/secret
+.git
+.github
+.gitignore
+.gitattributes
+.editorconfig
+
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+
+# Secret & env lokal jangan masuk image (env disuntik via compose env_file)
+.env
+.env.*
+!.env.docker.example
+
+# Storage runtime (dibuat ulang oleh entrypoint / volume)
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+
+# Tooling & dokumen
+tests
+docs
+phpunit.xml
+README.md
+run.sh
+run.bat
+check_rooms.php
+.tools
+.idea
+.vscode

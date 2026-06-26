@@ -129,30 +129,58 @@ Dengan `QUEUE_CONNECTION=sync`, pengiriman notifikasi dilakukan langsung saat re
 
 ## Cara Cepat (one-click)
 
-Tersedia runner satu-klik yang otomatis menyiapkan `.env`, dependensi, migrasi,
-seed, lalu menjalankan aplikasi.
+Tersedia runner satu-klik (`run.sh` / `run.bat`) dengan dua mode terpisah:
+
+| Mode | Perintah | Cara jalan | Isi data |
+| --- | --- | --- | --- |
+| **demo** (lokal/dev) | `./run.sh` | **native** php/composer/node + hot-reload Vite | esensial **+** data contoh + akun per-role |
+| **deploy** (produksi) | `./run.sh deploy` | **Docker** penuh (app FrankenPHP + MariaDB) | **esensial saja** (referensi + 1 admin dari `.env`) |
 
 ```bash
 # Linux/macOS/Git Bash
-./run.sh            # demo (lokal/dev): data contoh + akun per-role + hot-reload Vite
-./run.sh deploy     # produksi: build optimized + seed ESENSIAL saja (admin dari .env)
-./run.sh help       # daftar perintah (status, doctor, demo-reset, prod-logs, dll)
+./run.sh            # demo lokal (butuh php/composer/node terpasang)
+./run.sh deploy     # produksi: SELURUH stack via Docker (server tidak butuh php/node)
+./run.sh status     # status container produksi
+./run.sh help       # semua perintah (demo-reset, prod-logs, prod-down, reset, dll)
 ```
 
 ```bat
-REM Windows
-run.bat             :: demo (lokal/dev)
-run.bat deploy      :: produksi (preview foreground)
-run.bat help
+REM Windows (Docker Desktop untuk deploy)
+run.bat             :: demo lokal
+run.bat deploy      :: produksi via Docker
 ```
 
-Perbedaan mode:
+- `demo` memakai `EssentialSeeder` + `DemoSeeder` (akun contoh + insiden/hazard dummy).
+  Reset cepat: `./run.sh demo-reset`.
+- `deploy` **bersih tanpa data contoh**: hanya skema + data referensi + **1 admin**.
+  Saat pertama deploy, `run.sh` meng-generate `DB_PASSWORD`, `DB_ROOT_PASSWORD`, dan
+  `ADMIN_PASSWORD` otomatis bila masih placeholder (password admin baru ditampilkan
+  di ringkasan — catat).
 
-- `demo` — seed `EssentialSeeder` + `DemoSeeder` (akun contoh + data insiden/hazard
-  dummy). Untuk showcase & pengujian. Reset cepat: `./run.sh demo-reset`.
-- `deploy`/`prod` — **bersih tanpa data contoh**: hanya skema + data referensi +
-  **1 admin** dari `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`). Ganti secret dulu.
-  Server produktif lab sebaiknya di-containerize (Docker) atau dijadikan unit systemd.
+## Deploy ke Server Lab (Docker)
+
+Server lab (`docker-host`, Ubuntu) **tidak punya PHP/Node** — semua jalan via Docker.
+
+```bash
+git clone <repo> TA_K3L && cd TA_K3L
+./run.sh deploy          # build image + start app+db, migrasi & seed esensial otomatis
+```
+
+Detail:
+
+- App berjalan di **FrankenPHP** (HTTP `:80` di dalam container), dipetakan ke
+  **`127.0.0.1:${APP_PORT}`** (default `8095`; `8088` sudah dipakai koperasi).
+- MariaDB **tidak diekspos** ke host/publik (hanya jaringan internal Docker).
+- Publikasikan: tambah **Public Hostname** di Cloudflare Tunnel `proxmox-server`
+  → `subdomain.trin-polman.id` ke `localhost:8095` (HTTPS di-handle tunnel).
+- Persisten: container `restart: unless-stopped` (tahan reboot, lepas dari terminal).
+- Update/redeploy: `git pull` → `./run.sh deploy`.
+- Kelola: `./run.sh prod-logs` (Ctrl+C keluar log, app tetap jalan),
+  `./run.sh prod-restart`, `./run.sh prod-down`, `./run.sh status`.
+- Cek kecepatan: `curl -s -o /dev/null -w "TTFB:%{time_starttransfer} Total:%{time_total}\n" http://127.0.0.1:8095/up`.
+
+> `APP_KEY` dibuat otomatis oleh entrypoint dan disimpan di volume `storage`
+> (konsisten antar restart) bila tidak diisi manual di `.env`.
 
 ## Instalasi Lokal (manual)
 
